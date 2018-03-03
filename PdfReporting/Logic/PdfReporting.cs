@@ -64,30 +64,40 @@ namespace PdfReporting.Logic
             FrameworkElement pageContent;
             FrameworkElement currentFrameworkElement = frameworkElement;
 
+            int visualTreeLevel = 0;
             double cumulatedHeight = 0;
 
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(currentFrameworkElement); i++)
             {
                 double elementHeightContentIncluded = GetFrameworkElementHeightIncludingContent(currentFrameworkElement);
 
-                if(cumulatedHeight + elementHeightContentIncluded < standartPageHeight)
+                if (cumulatedHeight + elementHeightContentIncluded < standartPageHeight)
                 {
-                    //The full Element is added to pageContent at the correct position
+                    //The full Element is added to pageContent at the correct position.
+                    AddToElement(currentFrameworkElement, ref pageContent);
+
+                    if (IsSameOrSubclass(typeof(Panel), currentFrameworkElement.GetType()) &&
+                        PanelHasVerticalOrientedItems((Panel)currentFrameworkElement))
+                    {
+                        //We must iterate through all items because the Panle can be distributet over several pages.
+                    }
                 }
 
-                if(IsSameOrSubclass(typeof(Panel), currentFrameworkElement.GetType()) && 
-                    PanelHasVerticalOrientedItems((Panel)currentFrameworkElement))
-                {
-                    //We must iterate through all items because the Panle can be distributet over several pages.
-                }
+                var pagesList = new List<FixedPage>();
+
+                return pagesList;
             }
-
-            var pagesList = new List<FixedPage>();
-
-           
-
-            return pagesList;
         }
+
+        
+        private static void AddToElement(FrameworkElement elementToBeAdded, ref FrameworkElement parentElement)
+        {
+            if (parentElement.GetType() == typeof(ContentControl))
+                ((ContentControl)parentElement).Content = elementToBeAdded;
+            else if (parentElement.GetType() == typeof(Panel))
+                ((Panel)parentElement).Children.Add(elementToBeAdded);
+        }
+
 
         /// <summary>
         /// 
