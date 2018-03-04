@@ -17,7 +17,7 @@ namespace PdfReporting.Logic
 
         private static double standartPageHeight = 1123.2;
         private static double standartPageWidth = 796.8;
-        private static int length;
+        private static double maxPageHeight;
 
         #endregion
 
@@ -33,6 +33,7 @@ namespace PdfReporting.Logic
         /// <param name="pdfFileName">The name of the .pdf-file that is created.</param>
         public static void CreatePdfFromReport(PdfReport pdfReport, object dataSource, string outputDirectory, string pdfFileName)
         {
+            maxPageHeight = pdfReport.Orientation == Orientation.Vertical ? standartPageHeight : standartPageWidth;
             pdfReport = SetDataContext(pdfReport, dataSource);
             
         }
@@ -52,41 +53,43 @@ namespace PdfReporting.Logic
         /// <summary>
         /// Goes through the reports visualtree and divides the report into several pages.
         /// </summary>
+        /// <param name="sourceFrameworkElement"></param>
+        /// <param name="destinationFrameworkElement"></param>
+        /// <returns></returns>
+        private static List<FixedPage> DivideReportIntoPages(FrameworkElement sourceFrameworkElement, FrameworkElement destinationFrameworkElement = null, List<FixedPage> pagesList)
+        {
+            if(destinationFrameworkElement == null)
+            {
+                //If the sourceFrameworkElement is the first element in the VisualTree than the destinationFrameworkElement is set here.
+                destinationFrameworkElement = RemoveContentFromElement(sourceFrameworkElement);
+            }
+            
+            if(GetFrameworkElementHeightIncludingContent(sourceFrameworkElement) <= maxPageHeight)
+            {
+                AddToElement(sourceFrameworkElement, ref destinationFrameworkElement);
+            }
+
+
+            
+        }
+
+        /// <summary>
+        /// Returns the given FrameworkElement without all its content.
+        /// </summary>
         /// <param name="frameworkElement"></param>
         /// <returns></returns>
-        private static List<FixedPage> DivideReportIntoPages(FrameworkElement frameworkElement)
+        private static FrameworkElement RemoveContentFromElement(FrameworkElement frameworkElement)
         {
-            if (frameworkElement == null)
+            if(frameworkElement.GetType() == typeof(ContentControl))
             {
-                throw new ArgumentNullException(nameof(frameworkElement));
+                ((ContentControl)frameworkElement).Content = null;
+            }
+            else if(frameworkElement.GetType() == typeof(Panel))
+            {
+                ((Panel)frameworkElement).Children.Clear();
             }
 
-            FrameworkElement pageContent;
-            FrameworkElement currentFrameworkElement = frameworkElement;
-
-            int visualTreeLevel = 0;
-            double cumulatedHeight = 0;
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(currentFrameworkElement); i++)
-            {
-                double elementHeightContentIncluded = GetFrameworkElementHeightIncludingContent(currentFrameworkElement);
-
-                if (cumulatedHeight + elementHeightContentIncluded < standartPageHeight)
-                {
-                    //The full Element is added to pageContent at the correct position.
-                    AddToElement(currentFrameworkElement, ref pageContent);
-
-                    if (IsSameOrSubclass(typeof(Panel), currentFrameworkElement.GetType()) &&
-                        PanelHasVerticalOrientedItems((Panel)currentFrameworkElement))
-                    {
-                        //We must iterate through all items because the Panle can be distributet over several pages.
-                    }
-                }
-
-                var pagesList = new List<FixedPage>();
-
-                return pagesList;
-            }
+            return frameworkElement;
         }
 
         
@@ -116,7 +119,7 @@ namespace PdfReporting.Logic
 
             //Here we must check for other paneltypes e.g. Canvas or WrapPanel
         }
-
+        
         /// <summary>
         /// Returns the height that is used by the given frameworkelement with the content included.
         /// </summary>
