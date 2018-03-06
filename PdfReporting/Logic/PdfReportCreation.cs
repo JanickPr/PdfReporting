@@ -35,7 +35,7 @@ namespace PdfReporting.Logic
         /// <param name="dataSource">The datasource which gets binded to the blueprint.</param>
         /// <param name="outputDirectory">The outputdirectory where the .pdf-file is saved to.</param>
         /// <param name="pdfFileName">The name of the .pdf-file that is created.</param>
-        public static void CreatePdfFromReport(PdfReport pdfReport, object dataSource, string outputDirectory)
+        public static void CreatePdfFromReport<T>(PdfReport pdfReport, T dataSource, string outputDirectory)
         {
             CreatePdfFromReport(pdfReport, new List<object> { dataSource }, outputDirectory);            
         }
@@ -48,32 +48,37 @@ namespace PdfReporting.Logic
         /// <param name="dataSourceList">The datasource which gets binded to the blueprint.</param>
         /// <param name="outputDirectory">The outputdirectory where the .pdf-file is saved to.</param>
         /// <param name="pdfFileName">The name of the .pdf-file that is created.</param>
-        public static void CreatePdfFromReport(PdfReport pdfReport, IEnumerable<object> dataSourceList, string outputDirectory)
+        public static void CreatePdfFromReport<T>(PdfReport pdfReport, IEnumerable<T> dataSourceList, string outputDirectory)
         {
             maxPageHeight = pdfReport.Orientation == Orientation.Vertical ? standartPageHeight : standartPageWidth;
             List<FixedPage> pageList = new List<FixedPage>();
 
             foreach (var dataSource in dataSourceList)
             {
-                pdfReport = SetDataContext(pdfReport, dataSource);
+                pdfReport = XamlCloner.XamlClone(SetDataContext(pdfReport, dataSource));
+
+                FrameworkElement temp = pdfReport;
+                while (GetChild(temp,0) != null)
+                    temp = GetChild(temp, 0);
+                
                 List<FixedPage> pageListTemp = DivideElementIntoPages(pdfReport, pdfReport);
 
                 pageList.AddRange(pageListTemp);
             }
 
             FixedDocument document = CreateFixedDocumentFromPageList(pageList);
+            MemoryStream xpsDocumentMemoryStream = CreateXpsFromFixedDocument(document);
+            CreatePdfFileInDirectory(xpsDocumentMemoryStream, outputDirectory);
 
         }
 
-        private static void CreatePdfFileInDirectory(FixedDocument document, string outputDirectory)
+        private static void CreatePdfFileInDirectory(MemoryStream xpsDocumentMemoryStream, string outputDirectory)
         {
-            MemoryStream xpsDokumentMemoryStream = CreateXpsFromFixedDocument(document);
-
             if (outputDirectory == null) return;
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputDirectory));
 
-            using (PdfSharp.Xps.XpsModel.XpsDocument pdfXpsDoc = PdfSharp.Xps.XpsModel.XpsDocument.Open(xpsDokumentMemoryStream))
+            using (PdfSharp.Xps.XpsModel.XpsDocument pdfXpsDoc = PdfSharp.Xps.XpsModel.XpsDocument.Open(xpsDocumentMemoryStream))
             {
                 PdfSharp.Xps.XpsConverter.Convert(pdfXpsDoc, outputDirectory, 0);
             }
@@ -82,6 +87,39 @@ namespace PdfReporting.Logic
             //var pdfDokument = new PdfSharp.Pdf.PdfDocument(outputDirectory);
             //pdfDokument.Pages.RemoveAt(0);
             //pdfDokument.Save(outputDirectory);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="element"></param>
+        /// <returns></returns>
+        private static FrameworkElement GetChild(FrameworkElement element, int childIndex)
+        {
+            if (IsSameOrSubclass(typeof(Grid), element.GetType()))
+            {
+                if (((Grid)element).Children.Count <= childIndex)
+                    throw new IndexOutOfRangeException();
+
+                return (FrameworkElement)((Grid)element).Children[childIndex];
+            }
+            else if(IsSameOrSubclass(typeof(Panel), element.GetType()))
+            {
+                if (((Panel)element).Children.Count <= childIndex)
+                    throw new IndexOutOfRangeException();
+
+                return (FrameworkElement)((Panel)element).Children[childIndex];
+            }
+            else if(IsSameOrSubclass(typeof(ContentControl), element.GetType()))
+            {
+                return (FrameworkElement)((ContentControl)element).Content;
+            }
+            else if (IsSameOrSubclass(typeof(Decorator), element.GetType()))
+            {
+                return (FrameworkElement)((Decorator)element).Child;
+            }
+
+            throw new ArgumentException();
         }
 
         private static MemoryStream CreateXpsFromFixedDocument(FixedDocument document)
@@ -331,6 +369,9 @@ namespace PdfReporting.Logic
 
             else if (parentElement.GetType() == typeof(Panel))
                 ((Panel)parentElement).Children.Add(elementToBeAdded);
+
+            else if (parentElement.GetType() == typeof(FixedPage))
+                ((FixedPage)parentElement).Children.Add(elementToBeAdded);
 
             else
                 throw new Exception("Error while adding VisualTreeElement to page.");
