@@ -18,7 +18,7 @@ namespace PdfReporting.CustomControls
     /// <summary>
     /// Represents the blueprint for the Report.
     /// </summary>
-    public class PdfReport : ContentControl
+    public class PdfReport : UserControl
     {
         #region Fields
 

@@ -69,6 +69,10 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Logic\ReportWrapper.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -78,6 +82,9 @@
     <Compile Include="CustomControls\PdfReport.cs" />
     <Compile Include="Enums\Orientation.cs" />
     <Compile Include="Logic\PdfReportCreation.cs" />
+    <Compile Include="Logic\ReportWrapper.xaml.cs">
+      <DependentUpon>ReportWrapper.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Logic\XamlCloner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

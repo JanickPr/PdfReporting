@@ -44,22 +44,37 @@ namespace PdfReporting.Logic
         /// Sets the  datacontext of the PdfReportBlueprint to the dataSource-object
         /// and creates an .pdf-file in the outputDirectory
         /// </summary>
-        /// <param name="pdfReport">The blueprint for the pdfreport.</param>
+        /// <param name="pdfReportNamespace">The blueprint for the pdfreport.</param>
         /// <param name="dataSourceList">The datasource which gets binded to the blueprint.</param>
         /// <param name="outputDirectory">The outputdirectory where the .pdf-file is saved to.</param>
         /// <param name="pdfFileName">The name of the .pdf-file that is created.</param>
-        public static void CreatePdfFromReport<T>(PdfReport pdfReport, IEnumerable<T> dataSourceList, string outputDirectory)
+        public static void CreatePdfFromReport<T>(string pdfReportNamespace, IEnumerable<T> dataSourceList, string outputDirectory)
         {
+            PdfReport pdfReport;
+            using (var stream = System.Reflection.Assembly.GetCallingAssembly().GetManifestResourceStream(pdfReportNamespace))
+            {
+                pdfReport = (PdfReport)System.Windows.Markup.XamlReader.Load(stream);
+            }
+
+            
+            
             maxPageHeight = pdfReport.Orientation == Orientation.Vertical ? standartPageHeight : standartPageWidth;
+
+            
+
             List<FixedPage> pageList = new List<FixedPage>();
 
             foreach (var dataSource in dataSourceList)
             {
-                pdfReport = XamlCloner.XamlClone(SetDataContext(pdfReport, dataSource));
+                pdfReport = XamlCloner.XamlClone(pdfReport);
+                pdfReport.DataContext = dataSource;
 
-                FrameworkElement temp = pdfReport;
-                while (GetChild(temp,0) != null)
-                    temp = GetChild(temp, 0);
+                ReportWrapper reportWrapper = new ReportWrapper(pdfReport);
+                reportWrapper.Height = maxPageHeight;
+
+                //FrameworkElement temp = pdfReport;
+                //while (GetChild(temp,0) != null)
+                //    temp = GetChild(temp, 0);
                 
                 List<FixedPage> pageListTemp = DivideElementIntoPages(pdfReport, pdfReport);
 
@@ -364,14 +379,21 @@ namespace PdfReporting.Logic
         /// <param name="elementToBeAdded"></param>
         private static void AddElement(ref FrameworkElement parentElement, FrameworkElement elementToBeAdded)
         {
+            SeperateFromParent(elementToBeAdded);
             if (parentElement.GetType() == typeof(ContentControl) && ((ContentControl)parentElement).Content == null)
+            {
                 ((ContentControl)parentElement).Content = elementToBeAdded;
+            }
 
             else if (parentElement.GetType() == typeof(Panel))
+            {
                 ((Panel)parentElement).Children.Add(elementToBeAdded);
+            }
 
             else if (parentElement.GetType() == typeof(FixedPage))
+            {
                 ((FixedPage)parentElement).Children.Add(elementToBeAdded);
+            }
 
             else
                 throw new Exception("Error while adding VisualTreeElement to page.");
@@ -434,6 +456,29 @@ namespace PdfReporting.Logic
             }
 
             return height;
+        }
+
+        private static void SeperateFromParent(FrameworkElement element)
+        {
+            var parentElement = element.Parent;
+
+            if (parentElement.GetType() == typeof(ContentControl) && ((ContentControl)parentElement).Content == null)
+            {
+                ((ContentControl)parentElement).Content = null;
+            }
+
+            else if (parentElement.GetType() == typeof(Panel))
+            {
+                ((Panel)parentElement).Children.Remove(element);
+            }
+
+            else if (parentElement.GetType() == typeof(FixedPage))
+            {
+                ((FixedPage)parentElement).Children.Remove(element);
+            }
+
+            else
+                throw new Exception("Error while adding VisualTreeElement to page.");
         }
 
         /// <summary>
