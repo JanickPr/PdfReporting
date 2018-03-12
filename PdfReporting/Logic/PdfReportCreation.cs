@@ -12,6 +12,7 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Xps;
 using System.Windows.Xps.Packaging;
+using System.Windows.Xps.Serialization;
 
 namespace PdfReporting.Logic
 {
@@ -40,6 +41,60 @@ namespace PdfReporting.Logic
             CreatePdfFromReport(pdfReport, new List<object> { dataSource }, outputDirectory);            
         }
 
+
+
+
+
+
+
+        public static void SaveAsXps<T>(string fileName, T dataSource)
+        {
+            object doc;
+
+            FileInfo fileInfo = new FileInfo(fileName);
+
+            using (FileStream file = fileInfo.OpenRead())
+            {
+                ParserContext context = new System.Windows.Markup.ParserContext();
+                context.BaseUri = new Uri(fileInfo.FullName, UriKind.Absolute);
+                doc = XamlReader.Load(file, context);
+            }
+
+            ((FlowDocument)doc).DataContext = dataSource;
+            
+
+            Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+             {
+                 if (!(doc is IDocumentPaginatorSource))
+                 {
+                     Console.WriteLine("DocumentPaginatorSource expected");
+                 }
+
+                 using (Package container = Package.Open(fileName + ".xps", FileMode.Create))
+                 {
+                     using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+                     {
+                         XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
+
+                         DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+                         paginator.ComputePageCount();
+                        // 8 inch x 6 inch, with half inch margin
+                        paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(0, 0));
+
+                         rsm.SaveAsXaml(paginator);
+                     }
+                 }
+
+                 Console.WriteLine("{0} generated.", fileName + ".xps");
+             }));
+            
+        }
+
+
+
+
+
+
         /// <summary>
         /// Sets the  datacontext of the PdfReportBlueprint to the dataSource-object
         /// and creates an .pdf-file in the outputDirectory
@@ -66,19 +121,8 @@ namespace PdfReporting.Logic
 
             foreach (var dataSource in dataSourceList)
             {
-                pdfReport = XamlCloner.XamlClone(pdfReport);
-                pdfReport.DataContext = dataSource;
 
-                ReportWrapper reportWrapper = new ReportWrapper(pdfReport);
-                reportWrapper.Height = maxPageHeight;
-
-                //FrameworkElement temp = pdfReport;
-                //while (GetChild(temp,0) != null)
-                //    temp = GetChild(temp, 0);
                 
-                List<FixedPage> pageListTemp = DivideElementIntoPages(pdfReport, pdfReport);
-
-                pageList.AddRange(pageListTemp);
             }
 
             FixedDocument document = CreateFixedDocumentFromPageList(pageList);
