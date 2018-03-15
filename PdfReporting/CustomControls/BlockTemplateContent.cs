@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Documents;
 
 namespace WpfPdfReporting.CustomControls
@@ -27,7 +22,7 @@ namespace WpfPdfReporting.CustomControls
 
         public BlockTemplateContent()
         {
-            HelperClass.FixupDataContext(this);
+            Helpers.FixupDataContext(this);
             Loaded += BlockTemplateContent_Loaded;
         }
 
@@ -43,7 +38,7 @@ namespace WpfPdfReporting.CustomControls
             Blocks.Clear();
             if (template != null)
             {
-                FrameworkContentElement element = HelperClass.LoadDataTemplate(template);
+                FrameworkContentElement element = Helpers.LoadDataTemplate(template);
                 Blocks.Add((Block)element);
             }
         }

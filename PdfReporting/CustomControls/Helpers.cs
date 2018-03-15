@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using WpfPdfReporting.CustomControls;
+using System;
 
-namespace WpfPdfReporting
+namespace WpfPdfReporting.CustomControls
 {
-    internal static class HelperClass
+    internal static class Helpers
     {
         /// <summary>
         /// If you use a bindable flow document element more than once, you may encounter a "Collection was modified" exception.
@@ -37,7 +32,7 @@ namespace WpfPdfReporting
         private static bool InternalUnFixupDataContext(DependencyObject dp)
         {
             // only consider those elements for which we've called FixupDataContext(): they all belong to this namespace
-            if (dp is FrameworkContentElement && dp.GetType().Namespace == typeof(HelperClass).Namespace)
+            if (dp is FrameworkContentElement && dp.GetType().Namespace == typeof(Helpers).Namespace)
             {
                 Binding binding = BindingOperations.GetBinding(dp, FrameworkContentElement.DataContextProperty);
                 if (binding != null

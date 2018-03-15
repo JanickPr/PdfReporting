@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 
@@ -17,7 +13,7 @@ namespace WpfPdfReporting.CustomControls
 
         public ItemsContent()
         {
-            HelperClass.FixupDataContext(this);
+            Helpers.FixupDataContext(this);
             Loaded += ItemsContent_Loaded;
         }
 
@@ -59,7 +55,7 @@ namespace WpfPdfReporting.CustomControls
                             panel = this;
                         else
                         {
-                            FrameworkContentElement p = HelperClass.LoadDataTemplate(itemsPanel);
+                            FrameworkContentElement p = Helpers.LoadDataTemplate(itemsPanel);
                             if (!(p is Block))
                                 throw new Exception("ItemsPanel must be a block element");
                             Blocks.Add((Block)p);
@@ -68,11 +64,11 @@ namespace WpfPdfReporting.CustomControls
                                 throw new Exception("ItemsHost not found. Did you forget to specify Attached.IsItemsHost?");
                         }
                     }
-                    FrameworkContentElement element = HelperClass.LoadDataTemplate(itemTemplate);
+                    FrameworkContentElement element = Helpers.LoadDataTemplate(itemTemplate);
                     element.DataContext = data;
-                    HelperClass.UnFixupDataContext(element);
+                    Helpers.UnFixupDataContext(element);
                     if (panel is Section)
-                        ((Section)panel).Blocks.Add(HelperClass.ConvertToBlock(data, element));
+                        ((Section)panel).Blocks.Add(Helpers.ConvertToBlock(data, element));
                     else if (panel is TableRowGroup)
                         ((TableRowGroup)panel).Rows.Add((TableRow)element);
                     else

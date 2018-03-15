@@ -90,7 +90,7 @@ namespace PdfReporting.Logic
 
         //}
 
-        public static int SaveAsXps(string fileName)
+        public static void SaveAsXps<T>(string fileName, T dataSource)
 
         {
 
@@ -114,56 +114,48 @@ namespace PdfReporting.Logic
 
             }
 
+            ((FlowDocument)doc).DataContext = dataSource;
 
-
-            if (!(doc is IDocumentPaginatorSource))
-
+            Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
             {
-
-                Console.WriteLine("DocumentPaginatorSource expected");
-
-                return -1;
-
-            }
-
-
-
-            using (Package container = Package.Open(fileName + ".xps", FileMode.Create))
-
-            {
-
-                using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+                if (!(doc is IDocumentPaginatorSource))
 
                 {
 
-                    XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
-
-
-
-                    DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
-
-
-
-                    // 8 inch x 6 inch, with half inch margin
-
-                    paginator = new DocumentPaginatorWrapper(paginator, new Size(768, 676), new Size(48, 48));
-
-
-
-                    rsm.SaveAsXaml(paginator);
+                    Console.WriteLine("DocumentPaginatorSource expected");
 
                 }
 
-            }
 
 
+                using (Package container = Package.Open(fileName + ".xps", FileMode.Create))
+
+                {
+
+                    using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+
+                    {
+
+                        XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
+
+
+
+                        DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+
+
+
+                        // 8 inch x 6 inch, with half inch margin
+
+                        //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+
+
+
+                        rsm.SaveAsXaml(paginator);
+                    }
+                }
+            }));
 
             Console.WriteLine("{0} generated.", fileName + ".xps");
-
-
-
-            return 0;
-
         }
 
         public static XpsDocument CreateXpsDocument(FlowDocument document, string filename)
