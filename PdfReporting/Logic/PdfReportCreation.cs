@@ -90,7 +90,7 @@ namespace PdfReporting.Logic
 
         //}
 
-        public static void SaveAsXps<T>(string fileName, T dataSource)
+        public static void SaveAsXps<T>(string fileName, T dataSource, string outputDirectory)
 
         {
 
@@ -116,46 +116,96 @@ namespace PdfReporting.Logic
 
             ((FlowDocument)doc).DataContext = dataSource;
 
+           
+
             Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
             {
+                Window window = new Window();
+                FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
+                flowDocumentScrollViewer.Document = (FlowDocument)doc;
+                window.Content = flowDocumentScrollViewer;
+                window.Show();
+                window.Close();
+
                 if (!(doc is IDocumentPaginatorSource))
-
                 {
-
                     Console.WriteLine("DocumentPaginatorSource expected");
-
                 }
 
-
-
                 using (Package container = Package.Open(fileName + ".xps", FileMode.Create))
-
                 {
-
                     using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
-
                     {
-
                         XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
 
-
-
                         DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
-
-
 
                         // 8 inch x 6 inch, with half inch margin
 
                         //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
 
-
-
                         rsm.SaveAsXaml(paginator);
                     }
                 }
             }));
+        }
 
-            Console.WriteLine("{0} generated.", fileName + ".xps");
+        public static void SaveAsXps<T>(string fileName, IEnumerable<T> dataSourceList, string outputDirectory)
+        {
+            int pageIndexCounter = 0;
+            foreach (var dataSource in dataSourceList)
+            {
+
+
+                object doc;
+
+                FileInfo fileInfo = new FileInfo(fileName);
+
+                using (FileStream file = fileInfo.OpenRead())
+                {
+                    System.Windows.Markup.ParserContext context = new System.Windows.Markup.ParserContext();
+                    context.BaseUri = new Uri(fileInfo.FullName, UriKind.Absolute);
+                    doc = System.Windows.Markup.XamlReader.Load(file, context);
+                }
+
+            ((FlowDocument)doc).DataContext = dataSource;
+
+                Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+                {
+                    Window window = new Window();
+                    FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
+                    flowDocumentScrollViewer.Document = (FlowDocument)doc;
+                    window.Content = flowDocumentScrollViewer;
+                    window.Show();
+                    window.Close();
+
+                    using (MemoryStream memorystream = new MemoryStream())
+                    {
+                        DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+                        using (Package container = Package.Open(memorystream, FileMode.Create))
+                        {
+                            using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+                            {
+                                XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
+
+                                paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+
+                                // 8 inch x 6 inch, with half inch margin
+
+                                //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+
+                                rsm.SaveAsXaml(paginator);
+                                
+                            }
+                        }
+
+                        CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
+
+                        pageIndexCounter += paginator.PageCount;
+                    }
+                }));
+
+            }
         }
 
         public static XpsDocument CreateXpsDocument(FlowDocument document, string filename)
@@ -210,16 +260,42 @@ namespace PdfReporting.Logic
 
         }
 
-        private static void CreatePdfFileInDirectory(MemoryStream xpsDocumentMemoryStream, string outputDirectory)
+        private static void CreatePdfFileInDirectory(MemoryStream xpsDocumentMemoryStream, string outputDirectory, int pageIndex, string filename)
         {
-            if (outputDirectory == null) return;
+            if (outputDirectory == null)
+            {
+                return;
+            }
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputDirectory));
 
+            bool fileCreated = false;
+
             using (PdfSharp.Xps.XpsModel.XpsDocument pdfXpsDoc = PdfSharp.Xps.XpsModel.XpsDocument.Open(xpsDocumentMemoryStream))
             {
-                PdfSharp.Xps.XpsConverter.Convert(pdfXpsDoc, outputDirectory, 0);
+                if(!File.Exists(outputDirectory))
+                {
+                    PdfSharp.Xps.XpsConverter.Convert(pdfXpsDoc, outputDirectory, 0);
+                    fileCreated = true;
+                }
+                else
+                {
+                    PdfSharp.Xps.XpsConverter.Convert(pdfXpsDoc, filename.Replace(".xaml", "") + ".pdf", 0);
+                }
             }
+            if (fileCreated) return; 
+
+            var pdfDokument = new PdfSharp.Pdf.PdfDocument(outputDirectory);
+            var tempPdfDocument = new PdfSharp.Pdf.PdfDocument(filename + ".pdf");
+
+            for (int i = 0; i < tempPdfDocument.PageCount; i++)
+            {
+                pdfDokument.AddPage(tempPdfDocument.Pages[i]);
+            }
+
+            pdfDokument.Dispose();
+            tempPdfDocument.Dispose();
+
 
             //Hier wird die leere erste Seite wieder entfernt, die in ErstellePdfInhalt<T> erstellt wurde.
             //var pdfDokument = new PdfSharp.Pdf.PdfDocument(outputDirectory);
