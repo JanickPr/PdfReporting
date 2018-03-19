@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MigraDoc.Rendering;
+using PdfSharp.Pdf;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
@@ -120,12 +122,14 @@ namespace PdfReporting.Logic
 
             Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
             {
-                Window window = new Window();
-                FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
-                flowDocumentScrollViewer.Document = (FlowDocument)doc;
-                window.Content = flowDocumentScrollViewer;
-                window.Show();
-                window.Close();
+                //Window window = new Window();
+                //FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
+                //flowDocumentScrollViewer.Document = (FlowDocument)doc;
+                //window.Content = flowDocumentScrollViewer;
+                //window.Show();
+                //window.Close();
+
+                ((FlowDocument)doc).Focus();
 
                 if (!(doc is IDocumentPaginatorSource))
                 {
@@ -172,19 +176,21 @@ namespace PdfReporting.Logic
 
                 Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
                 {
-                    Window window = new Window();
-                    FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
-                    flowDocumentScrollViewer.Document = (FlowDocument)doc;
-                    window.Content = flowDocumentScrollViewer;
-                    window.Show();
-                    window.Close();
+                    //Window window = new Window();
+                    //FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
+                    //flowDocumentScrollViewer.Document = (FlowDocument)doc;
+                    //window.Content = flowDocumentScrollViewer;
+                    //window.Show();
+                    //window.Close();
+
+
 
                     using (MemoryStream memorystream = new MemoryStream())
                     {
                         DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
                         using (Package container = Package.Open(memorystream, FileMode.Create))
                         {
-                            using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+                            using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.NotCompressed))
                             {
                                 XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
 
@@ -192,13 +198,12 @@ namespace PdfReporting.Logic
 
                                 // 8 inch x 6 inch, with half inch margin
 
-                                //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+                                //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(0, 0));
 
                                 rsm.SaveAsXaml(paginator);
-                                
                             }
                         }
-
+                                                
                         CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
 
                         pageIndexCounter += paginator.PageCount;
@@ -292,9 +297,9 @@ namespace PdfReporting.Logic
             {
                 pdfDokument.AddPage(tempPdfDocument.Pages[i]);
             }
-
             pdfDokument.Dispose();
             tempPdfDocument.Dispose();
+            pdfDokument.Save(outputDirectory);
 
 
             //Hier wird die leere erste Seite wieder entfernt, die in ErstellePdfInhalt<T> erstellt wurde.
