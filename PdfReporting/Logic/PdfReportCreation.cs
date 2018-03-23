@@ -8,6 +8,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Interop;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Xps;
@@ -122,12 +123,14 @@ namespace PdfReporting.Logic
 
             Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
             {
-                //Window window = new Window();
-                //FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
-                //flowDocumentScrollViewer.Document = (FlowDocument)doc;
-                //window.Content = flowDocumentScrollViewer;
-                //window.Show();
-                //window.Close();
+                Window window = new Window();
+                FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
+                flowDocumentScrollViewer.Document = (FlowDocument)doc;
+                window.Content = flowDocumentScrollViewer;
+                //var windowInteropHelper = new WindowInteropHelper(window);
+                //windowInteropHelper.EnsureHandle();
+                window.Show();
+                window.Close();
 
                 ((FlowDocument)doc).Focus();
 
@@ -146,7 +149,7 @@ namespace PdfReporting.Logic
 
                         // 8 inch x 6 inch, with half inch margin
 
-                        //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+                        paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
 
                         rsm.SaveAsXaml(paginator);
                     }
@@ -204,7 +207,7 @@ namespace PdfReporting.Logic
                             }
                         }
                                                 
-                        CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
+                        //CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
 
                         pageIndexCounter += paginator.PageCount;
                     }
