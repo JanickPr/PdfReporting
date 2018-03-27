@@ -155,7 +155,7 @@ namespace PdfReporting.Logic
 
         public static void SaveAsXps<T>(string fileName, IEnumerable<T> dataSourceList, string outputDirectory)
         {
-            int pageIndexCounter = 0;
+            FixedDocument fixedDocument = new FixedDocument();
             foreach (var dataSource in dataSourceList)
             {
 
@@ -187,9 +187,13 @@ namespace PdfReporting.Logic
                         DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
                         using (Package container = Package.Open(memorystream, FileMode.Create))
                         {
-                            using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+                            var packUri = new Uri("pack://temp.xps");
+                            PackageStore.RemovePackage(packUri);
+                            PackageStore.AddPackage(packUri, container);
+
+                            using (XpsDocument xpsDocTemp = new XpsDocument(container, CompressionOption.Maximum, packUri.ToString()))
                             {
-                                XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
+                                XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDocTemp), false);
 
                                 paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
 
@@ -198,17 +202,28 @@ namespace PdfReporting.Logic
                                 //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
 
                                 rsm.SaveAsXaml(paginator);
-                                
+                                FixedDocument tempFixedDocument = xpsDocTemp.GetFixedDocumentSequence().References[0].GetDocument(true);
+
+                                foreach (var page in tempFixedDocument.Pages)
+                                {
+                                    var newPage = new PageContent();
+                                    fixedDocument.Pages.Add(newPage);
+                                    newPage = page;
+                                }
+
                             }
                         }
 
-                        CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
-
-                        pageIndexCounter += paginator.PageCount;
+                        //CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
                     }
                 }));
 
             }
+            XpsDocument xpsDoc = new XpsDocument(outputDirectory, FileAccess.ReadWrite);
+            XpsDocumentWriter xpsDocWriter = XpsDocument.CreateXpsDocumentWriter(xpsDoc);
+            xpsDocWriter.Write(fixedDocument);
+            xpsDoc.Close();
+
         }
 
         public static XpsDocument CreateXpsDocument(FlowDocument document, string filename)
