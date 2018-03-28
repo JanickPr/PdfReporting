@@ -97,28 +97,7 @@ namespace PdfReporting.Logic
 
         {
 
-            object doc;
-
-
-
-            FileInfo fileInfo = new FileInfo(fileName);
-
-
-
-            using (FileStream file = fileInfo.OpenRead())
-
-            {
-
-                System.Windows.Markup.ParserContext context = new System.Windows.Markup.ParserContext();
-
-                context.BaseUri = new Uri(fileInfo.FullName, UriKind.Absolute);
-
-                doc = System.Windows.Markup.XamlReader.Load(file, context);
-
-            }
-
-            ((FlowDocument)doc).DataContext = dataSource;
-
+            object doc = GetFlowDocumentFromTemplateFileWithDataContext(fileName, dataSource);
            
 
             Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
@@ -153,12 +132,61 @@ namespace PdfReporting.Logic
             }));
         }
 
+        private static FlowDocument GetFlowDocumentFromTemplateFileWithDataContext<T>(string filename, T dataSource)
+        {
+            FlowDocument flowdocument = LoadFlowDocmentFromTemplateFile(filename);
+            flowdocument.DataContext = dataSource;
+            return flowdocument;
+        }
+
+        private static FlowDocument LoadFlowDocmentFromTemplateFile(string fileName)
+        {
+            FlowDocument flowdocument;
+
+            using (FileStream fileStream = GetFileStreamFor(fileName))
+            {
+                ParserContext parserContext = GetParserContextFor(fileName);
+                flowdocument = (FlowDocument)XamlReader.Load(fileStream, parserContext);
+            }
+
+            return flowdocument;          
+        }
+
+        private static ParserContext GetParserContextFor(string filename)
+        {
+            Uri uri = GetAbsoluteUriForFile(filename);
+            ParserContext parser = GetParserContextWithBaseUri(uri);
+
+            return parser;
+        }
+
+        private static Uri GetAbsoluteUriForFile(string fullFileName)
+        {
+            return new Uri(fullFileName, UriKind.Absolute);
+        }
+
+        private static ParserContext GetParserContextWithBaseUri(Uri uri)
+        {
+            return new ParserContext { BaseUri = uri };
+        }
+
+        private static FileStream GetFileStreamFor(string fileName)
+        {
+            FileInfo fileInfo = GetFileInfoFor(fileName);
+            return fileInfo.OpenRead();
+        }
+
+        private static FileInfo GetFileInfoFor(string filename)
+        {
+            return new FileInfo(filename);
+        }
+
         public static void SaveAsXps<T>(string fileName, IEnumerable<T> dataSourceList, string outputDirectory)
         {
-            FixedDocument fixedDocument = new FixedDocument();
-            foreach (var dataSource in dataSourceList)
+            List<XpsDocument> documentList = new List<XpsDocument>();
+            for (int i = 0; i < dataSourceList.Count(); i++)
             {
-
+                var dataSource = dataSourceList.ElementAt(i);
 
                 object doc;
 
@@ -185,45 +213,71 @@ namespace PdfReporting.Logic
                     using (MemoryStream memorystream = new MemoryStream())
                     {
                         DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
-                        using (Package container = Package.Open(memorystream, FileMode.Create))
-                        {
-                            var packUri = new Uri("pack://temp.xps");
-                            PackageStore.RemovePackage(packUri);
-                            PackageStore.AddPackage(packUri, container);
+                        Package container = Package.Open(memorystream, FileMode.Create);
+                        
+                        var packUri = new Uri($@"pack://temp{i}.xps");
+                        PackageStore.AddPackage(packUri, container);
 
-                            using (XpsDocument xpsDocTemp = new XpsDocument(container, CompressionOption.Maximum, packUri.ToString()))
-                            {
-                                XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDocTemp), false);
+                        XpsDocument xpsDocTemp = new XpsDocument(container, CompressionOption.Maximum, packUri.ToString());
+                        XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDocTemp), false);
 
-                                paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+                        paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
 
-                                // 8 inch x 6 inch, with half inch margin
+                        // 8 inch x 6 inch, with half inch margin
 
-                                //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+                        //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
 
-                                rsm.SaveAsXaml(paginator);
-                                FixedDocument tempFixedDocument = xpsDocTemp.GetFixedDocumentSequence().References[0].GetDocument(true);
-
-                                foreach (var page in tempFixedDocument.Pages)
-                                {
-                                    var newPage = new PageContent();
-                                    fixedDocument.Pages.Add(newPage);
-                                    newPage = page;
-                                }
-
-                            }
-                        }
+                        //rsm.SaveAsXaml(paginator);
+                        documentList.Add(xpsDocTemp);
+                                
+                        //FixedDocument tempFixedDocument = xpsDocTemp.GetFixedDocumentSequence().References[0].GetDocument(true);
+                        //foreach (var page in tempFixedDocument.Pages)
+                        //{
+                        //    var newPage = new PageContent();
+                        //    fixedDocument.Pages.Add(newPage);
+                        //    newPage = page;
+                        //}
+                    }
 
                         //CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
-                    }
                 }));
 
             }
-            XpsDocument xpsDoc = new XpsDocument(outputDirectory, FileAccess.ReadWrite);
-            XpsDocumentWriter xpsDocWriter = XpsDocument.CreateXpsDocumentWriter(xpsDoc);
-            xpsDocWriter.Write(fixedDocument);
-            xpsDoc.Close();
+            //XpsDocument xpsDoc = new XpsDocument(outputDirectory, FileAccess.ReadWrite);
+            //XpsDocumentWriter xpsDocWriter = XpsDocument.CreateXpsDocumentWriter(xpsDoc);
+            //xpsDocWriter.Write(fixedDocument);
+            //xpsDoc.Close();
 
+            MergeXpsDocument(outputDirectory, documentList);
+
+            for (int i = 0; i < dataSourceList.Count(); i++)
+            {
+                PackageStore.RemovePackage(new Uri($@"pack://temp{i}.xps"));
+            }
+
+        }
+
+        public static void MergeXpsDocument(string outputDirectory, List<XpsDocument> sourceDocuments)
+        {
+            XpsDocument xpsDocument = new XpsDocument(outputDirectory, System.IO.FileAccess.ReadWrite);
+            XpsDocumentWriter xpsDocumentWriter = XpsDocument.CreateXpsDocumentWriter(xpsDocument);
+            FixedDocumentSequence fixedDocumentSequence = new FixedDocumentSequence();
+
+            foreach (XpsDocument doc in sourceDocuments)
+            {
+                FixedDocumentSequence sourceSequence = doc.GetFixedDocumentSequence();
+                foreach (DocumentReference dr in sourceSequence.References)
+                {
+                    DocumentReference newDocumentReference = new DocumentReference();
+                    newDocumentReference.Source = dr.Source;
+                    (newDocumentReference as IUriContext).BaseUri = (dr as IUriContext).BaseUri;
+                    FixedDocument fd = newDocumentReference.GetDocument(true);
+                    newDocumentReference.SetDocument(fd);
+                    fixedDocumentSequence.References.Add(newDocumentReference);
+                }
+            }
+            xpsDocumentWriter.Write(fixedDocumentSequence);
+            xpsDocument.Close();
         }
 
         public static XpsDocument CreateXpsDocument(FlowDocument document, string filename)
