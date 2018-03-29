@@ -82,7 +82,11 @@
     <Compile Include="CustomControls\Helpers.cs" />
     <Compile Include="CustomControls\ItemsContent.cs" />
     <Compile Include="Logic\DocumentPaginatorWrapper.cs" />
+    <Compile Include="Logic\FLowDocumentExtensionMethods.cs" />
+    <Compile Include="Logic\ManagedXpsDocument.cs" />
+    <Compile Include="Logic\PackageHelper.cs" />
     <Compile Include="Logic\PdfReportCreation.cs" />
+    <Compile Include="Logic\XpsDocumentManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -93,93 +93,37 @@ namespace PdfReporting.Logic
 
         //}
 
-        public static void SaveAsXps<T>(string fileName, T dataSource, string outputDirectory)
-
+        public static void SaveAsXps<T>(string templateFileName, T dataSource, string outputDirectory)
         {
-
-            object doc = GetFlowDocumentFromTemplateFileWithDataContext(fileName, dataSource);
-           
-
-            Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            FlowDocument flowDocument = GetFlowDocumentFromTemplateFile(templateFileName);
+            flowDocument.SetUpDataContext(dataSource);
+            
+            using (Package container = Package.Open(templateFileName + ".xps", FileMode.Create))
             {
-                Window window = new Window();
-                FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
-                flowDocumentScrollViewer.Document = (FlowDocument)doc;
-                window.Content = flowDocumentScrollViewer;
-                window.Show();
-                window.Close();
-
-                if (!(doc is IDocumentPaginatorSource))
+                using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
                 {
-                    Console.WriteLine("DocumentPaginatorSource expected");
+                    XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
+
+                    DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+
+                    // 8 inch x 6 inch, with half inch margin
+
+                    //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+
+                    rsm.SaveAsXaml(paginator);
                 }
-
-                using (Package container = Package.Open(fileName + ".xps", FileMode.Create))
-                {
-                    using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
-                    {
-                        XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
-
-                        DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
-
-                        // 8 inch x 6 inch, with half inch margin
-
-                        //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
-
-                        rsm.SaveAsXaml(paginator);
-                    }
-                }
-            }));
+            }
         }
 
-        private static FlowDocument GetFlowDocumentFromTemplateFileWithDataContext<T>(string filename, T dataSource)
+        private static FlowDocument GetFlowDocumentFromTemplateFile(string templateFilename)
         {
-            FlowDocument flowdocument = LoadFlowDocmentFromTemplateFile(filename);
-            flowdocument.DataContext = dataSource;
+            FlowDocument flowdocument = new FlowDocument();
+            flowdocument.LoadFromTemplate(templateFilename);
             return flowdocument;
         }
 
-        private static FlowDocument LoadFlowDocmentFromTemplateFile(string fileName)
-        {
-            FlowDocument flowdocument;
 
-            using (FileStream fileStream = GetFileStreamFor(fileName))
-            {
-                ParserContext parserContext = GetParserContextFor(fileName);
-                flowdocument = (FlowDocument)XamlReader.Load(fileStream, parserContext);
-            }
-
-            return flowdocument;          
-        }
-
-        private static ParserContext GetParserContextFor(string filename)
-        {
-            Uri uri = GetAbsoluteUriForFile(filename);
-            ParserContext parser = GetParserContextWithBaseUri(uri);
-
-            return parser;
-        }
-
-        private static Uri GetAbsoluteUriForFile(string fullFileName)
-        {
-            return new Uri(fullFileName, UriKind.Absolute);
-        }
-
-        private static ParserContext GetParserContextWithBaseUri(Uri uri)
-        {
-            return new ParserContext { BaseUri = uri };
-        }
-
-        private static FileStream GetFileStreamFor(string fileName)
-        {
-            FileInfo fileInfo = GetFileInfoFor(fileName);
-            return fileInfo.OpenRead();
-        }
-
-        private static FileInfo GetFileInfoFor(string filename)
-        {
-            return new FileInfo(filename);
-        }
+        
 
         public static void SaveAsXps<T>(string fileName, IEnumerable<T> dataSourceList, string outputDirectory)
         {

@@ -84,20 +84,20 @@ namespace WpfPdfReporting.CustomControls
 
         private void OnItemsSourceChanged(IEnumerable newValue)
         {
-            if (IsLoaded)
-                GenerateContent(ItemsPanel, ItemTemplate, newValue);
+            //if (IsLoaded)
+            GenerateContent(ItemsPanel, ItemTemplate, newValue);
         }
 
         private void OnItemTemplateChanged(DataTemplate newValue)
         {
-            if (IsLoaded)
-                GenerateContent(ItemsPanel, newValue, ItemsSource);
+            //if (IsLoaded)
+            GenerateContent(ItemsPanel, newValue, ItemsSource);
         }
 
         private void OnItemsPanelChanged(DataTemplate newValue)
         {
-            if (IsLoaded)
-                GenerateContent(newValue, ItemTemplate, ItemsSource);
+            //if (IsLoaded)
+            GenerateContent(newValue, ItemTemplate, ItemsSource);
         }
 
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
