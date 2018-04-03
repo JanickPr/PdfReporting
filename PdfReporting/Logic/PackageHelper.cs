@@ -10,7 +10,7 @@ namespace PdfReporting.Logic
 {
     public static class PackageHelper
     {
-        public static Package OpenInMemoryStream()
+        public static Package OpenPackageInMemoryStream()
         {
             MemoryStream memoryStream = new MemoryStream();
             return Package.Open(memoryStream, FileMode.Create);
