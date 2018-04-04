@@ -72,7 +72,5 @@ namespace PdfReporting.Logic
             window.Show();
             window.Close();
         }
-
-        private
     }
 }

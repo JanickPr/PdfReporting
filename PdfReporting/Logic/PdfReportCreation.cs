@@ -95,27 +95,31 @@ namespace PdfReporting.Logic
 
         public static void SaveAsXps<T>(string templateFileName, T dataSource, string outputDirectory)
         {
-            FlowDocument flowDocument = GetFlowDocumentFromTemplateFile(templateFileName);
+            FlowDocument flowDocument = GetFlowDocumentFrom(templateFileName);
             flowDocument.SetUpDataContext(dataSource);
+
+            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer();
+            xpsDocumentSplicer.AddXpsDocumentWithContentFrom(flowDocument);
+            xpsDocumentSplicer.SaveSplicedXpsDocumentTo(outputDirectory);
             
-            using (Package container = Package.Open(templateFileName + ".xps", FileMode.Create))
-            {
-                using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
-                {
-                    XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
+            //using (Package container = Package.Open(templateFileName + ".xps", FileMode.Create))
+            //{
+            //    using (XpsDocument xpsDoc = new XpsDocument(container, CompressionOption.Maximum))
+            //    {
+            //        XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDoc), false);
 
-                    DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+            //        DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
 
-                    // 8 inch x 6 inch, with half inch margin
+            //        // 8 inch x 6 inch, with half inch margin
 
-                    //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
+            //        //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
 
-                    rsm.SaveAsXaml(paginator);
-                }
-            }
+            //        rsm.SaveAsXaml(paginator);
+            //    }
+            //}
         }
 
-        private static FlowDocument GetFlowDocumentFromTemplateFile(string templateFilename)
+        private static FlowDocument GetFlowDocumentFrom(string templateFilename)
         {
             FlowDocument flowdocument = new FlowDocument();
             flowdocument.LoadFromTemplate(templateFilename);
@@ -127,52 +131,65 @@ namespace PdfReporting.Logic
 
         public static void SaveAsXps<T>(string fileName, IEnumerable<T> dataSourceList, string outputDirectory)
         {
-            List<XpsDocument> documentList = new List<XpsDocument>();
-            for (int i = 0; i < dataSourceList.Count(); i++)
+            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer();
+
+            foreach (var dataSourceItem in dataSourceList)
             {
-                var dataSource = dataSourceList.ElementAt(i);
+                FlowDocument flowDocument = GetFlowDocumentFrom(fileName);
+                flowDocument.SetUpDataContext(dataSourceItem);
+                xpsDocumentSplicer.AddXpsDocumentWithContentFrom(flowDocument);
+            }
 
-                object doc;
+            xpsDocumentSplicer.SaveSplicedXpsDocumentTo(outputDirectory);
+            
 
-                FileInfo fileInfo = new FileInfo(fileName);
 
-                using (FileStream file = fileInfo.OpenRead())
-                {
-                    System.Windows.Markup.ParserContext context = new System.Windows.Markup.ParserContext();
-                    context.BaseUri = new Uri(fileInfo.FullName, UriKind.Absolute);
-                    doc = System.Windows.Markup.XamlReader.Load(file, context);
-                }
+            //List<XpsDocument> documentList = new List<XpsDocument>();
+            //for (int i = 0; i < dataSourceList.Count(); i++)
+            //{
+            //    var dataSource = dataSourceList.ElementAt(i);
 
-            ((FlowDocument)doc).DataContext = dataSource;
+            //    object doc;
 
-                Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
-                {
-                    Window window = new Window();
-                    FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
-                    flowDocumentScrollViewer.Document = (FlowDocument)doc;
-                    window.Content = flowDocumentScrollViewer;
-                    window.Show();
-                    window.Close();
+            //    FileInfo fileInfo = new FileInfo(fileName);
 
-                    using (MemoryStream memorystream = new MemoryStream())
-                    {
-                        DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
-                        Package container = Package.Open(memorystream, FileMode.Create);
+            //    using (FileStream file = fileInfo.OpenRead())
+            //    {
+            //        System.Windows.Markup.ParserContext context = new System.Windows.Markup.ParserContext();
+            //        context.BaseUri = new Uri(fileInfo.FullName, UriKind.Absolute);
+            //        doc = System.Windows.Markup.XamlReader.Load(file, context);
+            //    }
+
+            //((FlowDocument)doc).DataContext = dataSource;
+
+            //    Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            //    {
+            //        Window window = new Window();
+            //        FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer();
+            //        flowDocumentScrollViewer.Document = (FlowDocument)doc;
+            //        window.Content = flowDocumentScrollViewer;
+            //        window.Show();
+            //        window.Close();
+
+            //        using (MemoryStream memorystream = new MemoryStream())
+            //        {
+            //            DocumentPaginator paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+            //            Package container = Package.Open(memorystream, FileMode.Create);
                         
-                        var packUri = new Uri($@"pack://temp{i}.xps");
-                        PackageStore.AddPackage(packUri, container);
+            //            var packUri = new Uri($@"pack://temp{i}.xps");
+            //            PackageStore.AddPackage(packUri, container);
 
-                        XpsDocument xpsDocTemp = new XpsDocument(container, CompressionOption.Maximum, packUri.ToString());
-                        XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDocTemp), false);
+            //            XpsDocument xpsDocTemp = new XpsDocument(container, CompressionOption.Maximum, packUri.ToString());
+            //            XpsSerializationManager rsm = new XpsSerializationManager(new XpsPackagingPolicy(xpsDocTemp), false);
 
-                        paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
+            //            paginator = ((IDocumentPaginatorSource)doc).DocumentPaginator;
 
                         // 8 inch x 6 inch, with half inch margin
 
                         //paginator = new DocumentPaginatorWrapper(paginator, new Size(standartPageWidth, standartPageHeight), new Size(48, 48));
 
                         //rsm.SaveAsXaml(paginator);
-                        documentList.Add(xpsDocTemp);
+                        //documentList.Add(xpsDocTemp);
                                 
                         //FixedDocument tempFixedDocument = xpsDocTemp.GetFixedDocumentSequence().References[0].GetDocument(true);
                         //foreach (var page in tempFixedDocument.Pages)
@@ -181,23 +198,23 @@ namespace PdfReporting.Logic
                         //    fixedDocument.Pages.Add(newPage);
                         //    newPage = page;
                         //}
-                    }
+                    //}
 
                         //CreatePdfFileInDirectory(memorystream, outputDirectory, pageIndexCounter, fileName);
-                }));
+                //}));
 
-            }
+            //}
             //XpsDocument xpsDoc = new XpsDocument(outputDirectory, FileAccess.ReadWrite);
             //XpsDocumentWriter xpsDocWriter = XpsDocument.CreateXpsDocumentWriter(xpsDoc);
             //xpsDocWriter.Write(fixedDocument);
             //xpsDoc.Close();
 
-            MergeXpsDocument(outputDirectory, documentList);
+            //MergeXpsDocument(outputDirectory, documentList);
 
-            for (int i = 0; i < dataSourceList.Count(); i++)
-            {
-                PackageStore.RemovePackage(new Uri($@"pack://temp{i}.xps"));
-            }
+            //for (int i = 0; i < dataSourceList.Count(); i++)
+            //{
+            //    PackageStore.RemovePackage(new Uri($@"pack://temp{i}.xps"));
+            //}
 
         }
 

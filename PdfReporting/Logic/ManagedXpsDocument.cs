@@ -24,7 +24,8 @@ namespace PdfReporting.Logic
 
         private void RegisterAtPackageStoreWith(Package package, Uri packageUri)
         {
-            if (PackageStoreContains(packageUri){
+            if (PackageStoreContains(packageUri))
+            {
                 UnregisterFromPackagestore(packageUri);
             }
 
@@ -51,21 +52,12 @@ namespace PdfReporting.Logic
         private DocumentPaginator GetDocumentPaginatorFrom(FlowDocument flowDocument)
         {
             return ((IDocumentPaginatorSource)flowDocument).DocumentPaginator;
-        }
+        }       
 
-        public void AddContentFrom(XpsDocument xpsDocument)
+        public new FixedDocumentSequence GetFixedDocumentSequence()
         {
-            FixedDocumentSequence fixedDocumentSequence = GetCopyOfFixedDocumentSequenceFrom(xpsDocument);
-            XpsDocumentWriter xpsDocumentWriter = GetXpsDocumentWriter();
-            xpsDocumentWriter.Write(fixedDocumentSequence);            
-        }
-
-        public FixedDocumentSequence GetCopyOfFixedDocumentSequenceFrom(XpsDocument sourceXpsDocument)
-        {
-            FixedDocumentSequence fixedDocumentSequence = this.GetFixedDocumentSequence();
-            List<DocumentReference> documentReferences = GetDocumentReferencesFrom(sourceXpsDocument);
-            documentReferences.ForEach(documentReference => fixedDocumentSequence.AddCopyOf(documentReference));
-            return fixedDocumentSequence;
+            FixedDocumentSequence fixedDocumentSequence = base.GetFixedDocumentSequence();
+            return fixedDocumentSequence ?? new FixedDocumentSequence();
         }
 
         private List<DocumentReference> GetDocumentReferencesFrom(XpsDocument xpsDocument)
@@ -76,6 +68,14 @@ namespace PdfReporting.Logic
         private XpsDocumentWriter GetXpsDocumentWriter()
         {
             return XpsDocument.CreateXpsDocumentWriter(this);
+        }
+
+        public void SaveTo(String outputDirectory)
+        {
+            this.GetXpsDocumentWriter().Write(outputDirectory);
+            this.UnregisterFromPackagestore(PackageUri);
+            this.Dispose(true);
+            this.Close();
         }
 
         private void UnregisterFromPackagestore(Uri packageUri)
