@@ -19,7 +19,14 @@ namespace PdfReporting.Logic
     /// </summary>
     public class XpsDocumentSplicer : List<ManagedXpsDocument>
     {
-        public void AddXpsDocumentWithContentFrom(FlowDocument flowDocument)
+        public void AddXpsDocumentFrom<T>(string templateFilePath, T dataSourceObject)
+        {
+            FlowDocument flowDocument = new FlowDocument();
+            flowDocument = flowDocument.InitializeFlowDocumentReportWith(templateFilePath, dataSourceObject);
+            this.AddXpsDocumentWithContentFrom(flowDocument);
+        }
+
+        private void AddXpsDocumentWithContentFrom(FlowDocument flowDocument)
         {
             ManagedXpsDocument managedXpsDocument = CreateManagedXpsDocumentFromFlowDocument(flowDocument);
             this.Add(managedXpsDocument);
