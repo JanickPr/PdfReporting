@@ -13,42 +13,44 @@ namespace PdfReporting.Logic
 {
     public static class FLowDocumentExtensionMethods
     {
-        public static void LoadFromTemplate(this FlowDocument flowDocument, string templateFileName)
+        public static FlowDocument LoadFromTemplate(this FlowDocument flowDocument, string templateFilePath)
         {
-            using (FileStream fileStream = GetFileStreamFor(templateFileName))
+            FileInfo templateFile = GetFileInfoFor(templateFilePath);
+            using (FileStream fileStream = GetFileStreamFor(templateFile))
             {
-                ParserContext parserContext = GetParserContextFor(templateFileName);
+                ParserContext parserContext = GetParserContextFor(templateFile);
                 flowDocument = (FlowDocument)XamlReader.Load(fileStream, parserContext);
             }
+            return flowDocument;
         }
 
-        private static ParserContext GetParserContextFor(string filename)
+        private static FileStream GetFileStreamFor(FileInfo file)
         {
-            Uri uri = GetAbsoluteUriForFile(filename);
+            FileInfo fileInfo = GetFileInfoFor(file.FullName);
+            return fileInfo.OpenRead();
+        }
+
+        private static FileInfo GetFileInfoFor(string filePath)
+        {
+            return new FileInfo(filePath);
+        }
+
+        private static ParserContext GetParserContextFor(FileInfo file)
+        {
+            Uri uri = GetAbsoluteUriForFile(file);
             ParserContext parser = GetParserContextWithBaseUri(uri);
 
             return parser;
         }
 
-        private static Uri GetAbsoluteUriForFile(string fullFileName)
+        private static Uri GetAbsoluteUriForFile(FileInfo file)
         {
-            return new Uri(fullFileName, UriKind.Absolute);
+            return new Uri(file.FullName, UriKind.Absolute);
         }
 
         private static ParserContext GetParserContextWithBaseUri(Uri uri)
         {
             return new ParserContext { BaseUri = uri };
-        }
-
-        private static FileStream GetFileStreamFor(string fileName)
-        {
-            FileInfo fileInfo = GetFileInfoFor(fileName);
-            return fileInfo.OpenRead();
-        }
-
-        private static FileInfo GetFileInfoFor(string filename)
-        {
-            return new FileInfo(filename);
         }
 
         public static void SetUpDataContext<T>(this FlowDocument flowDocument, T dataSourceObject)

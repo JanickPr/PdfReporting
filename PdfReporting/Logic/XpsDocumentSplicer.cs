@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Text;
@@ -51,18 +52,15 @@ namespace PdfReporting.Logic
 
         public void SaveSplicedXpsDocumentTo(String outputDirectory)
         {
-            if (this.Count > 1)
-                GetSplicedDocument().SaveTo(outputDirectory);
-            else
-                this.First().SaveTo(outputDirectory);
+            FixedDocumentSequence fixedDocumentSequence = GetSplicedFixedDocumentSequence();
+            SaveXpsDocumentWithFixedDocumentSequenceTo(outputDirectory, fixedDocumentSequence);
         }
 
-        private ManagedXpsDocument GetSplicedDocument()
+        private FixedDocumentSequence GetSplicedFixedDocumentSequence()
         {
-            ManagedXpsDocument xpsDocument = GetNewManagedXpsDocument();
             List<PageContent> pages = this.GetAllPages();
-            
-            return xpsDocument;
+            FixedDocumentSequence fixedDocumentSequence = CreateManagedXpsDocumentFromPages(pages);
+            return fixedDocumentSequence;
         }
 
         private List<PageContent> GetAllPages()
@@ -93,7 +91,7 @@ namespace PdfReporting.Logic
             return fixedDocuments;
         }
 
-        private ManagedXpsDocument CreateManagedXpsDocumentFromPages(IEnumerable<PageContent> pages)
+        private FixedDocumentSequence CreateManagedXpsDocumentFromPages(IEnumerable<PageContent> pages)
         {
             FixedDocumentSequence newSequence = new FixedDocumentSequence();
             DocumentReference newDocReference = new DocumentReference();
@@ -103,7 +101,7 @@ namespace PdfReporting.Logic
             foreach (PageContent page in pages)
             {
                 PageContent newPage = new PageContent();
-                newPage.Source = page.Source;
+                newPage.Source = page.Source;   
                 (newPage as IUriContext).BaseUri = ((IUriContext)page).BaseUri;
                 newPage.GetPageRoot(true);
                 newDoc.Pages.Add(newPage);
@@ -112,11 +110,22 @@ namespace PdfReporting.Logic
             // The order in which you do this is REALLY important
             newSequence.References.Add(newDocReference);
 
-            ManagedXpsDocument managedXpsDocument = GetNewManagedXpsDocument();
-            XpsDocumentWriter xpsDocumentWriter = XpsDocument.CreateXpsDocumentWriter(managedXpsDocument);
-            xpsDocumentWriter.Write(newSequence);
+            return newSequence;
+        }
 
-            return managedXpsDocument;
+        private void SaveXpsDocumentWithFixedDocumentSequenceTo(string outputDirectory, FixedDocumentSequence fixedDocumentSequence)
+        {
+            File.Delete(outputDirectory);
+            using (XpsDocument xpsDocument = new XpsDocument(outputDirectory, FileAccess.ReadWrite))
+            {
+                XpsDocumentWriter xpsDocumentWriter = GetXpsDocumentWriterFor(xpsDocument);
+                xpsDocumentWriter.Write(fixedDocumentSequence);
+            }
+        }
+
+        private XpsDocumentWriter GetXpsDocumentWriterFor(XpsDocument xpsDocument)
+        {
+            return XpsDocument.CreateXpsDocumentWriter(xpsDocument);
         }
     }
 }

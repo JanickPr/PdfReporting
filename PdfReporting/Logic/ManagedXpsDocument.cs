@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Text;
@@ -65,17 +66,9 @@ namespace PdfReporting.Logic
             return xpsDocument.GetFixedDocumentSequence().References.ToList();
         }
 
-        private XpsDocumentWriter GetXpsDocumentWriter()
+        private XpsDocumentWriter GetXpsDocumentWriterFor(XpsDocument xpsDocument)
         {
-            return XpsDocument.CreateXpsDocumentWriter(this);
-        }
-
-        public void SaveTo(String outputDirectory)
-        {
-            this.GetXpsDocumentWriter().Write(outputDirectory);
-            this.UnregisterFromPackagestore(PackageUri);
-            this.Dispose(true);
-            this.Close();
+            return XpsDocument.CreateXpsDocumentWriter(xpsDocument);
         }
 
         private void UnregisterFromPackagestore(Uri packageUri)
