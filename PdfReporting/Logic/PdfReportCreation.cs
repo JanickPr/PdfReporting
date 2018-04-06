@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,7 @@ using System.Windows.Documents;
 using System.Windows.Interop;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Threading;
 using System.Windows.Xps;
 using System.Windows.Xps.Packaging;
 using System.Windows.Xps.Serialization;
@@ -30,25 +32,33 @@ namespace PdfReporting.Logic
 
         #region Methods
 
-        public static async void CreatePdfReportFromObjectAsync<T>(string templateFilePath, T dataSourceObject, string outputDirectory, IProgress<int> progress = null)
-            => await CreatePdfReportFromObjectListAsync(templateFilePath, new List<T> { dataSourceObject }, outputDirectory, progress);
+        public static async Task CreatePdfReportFromObjectAsync<T>(string templateFilePath, T dataSourceObject, string outputDirectory, 
+                                                                   CancellationToken token = default, IProgress<int> progress = null)
+            => await CreatePdfReportFromObjectListAsync(templateFilePath, new List<T> { dataSourceObject }, outputDirectory, token, progress);
 
-        public static async Task CreatePdfReportFromObjectListAsync<T>(string templateFilePath, IEnumerable<T> dataSourceList, string outputDirectory, IProgress<int> progress = null)
+        public static Task CreatePdfReportFromObjectListAsync<T>(string templateFilePath, IEnumerable<T> dataSourceList, string outputDirectory,
+                                                                       CancellationToken token = default, IProgress<int> progress = null)
         {
-            var task = Task.Factory.StartNew(() =>
+            var taskCompletionSource = new TaskCompletionSource<object>();
+            var thread = new Thread(() =>
             {
                 XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer();
-
                 foreach (var dataSourceItem in dataSourceList)
                 {
-                    progress.Report(GetProcessingProgress(dataSourceItem, dataSourceList));
+                    if(progress != null)
+                        progress.Report(GetProcessingProgress(dataSourceItem, dataSourceList));
+
+                    if (token.IsCancellationRequested)
+                        return;
+
                     xpsDocumentSplicer.AddXpsDocumentFrom(templateFilePath, dataSourceItem);
                 }
-
                 SaveAsPdf(xpsDocumentSplicer, outputDirectory);
             });
 
-            await task;
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            return taskCompletionSource.Task;
         }
 
         private static int GetProcessingProgress<T>(T dataSourceItem, IEnumerable<T> dataSourceList)
@@ -68,7 +78,7 @@ namespace PdfReporting.Logic
 
         private static string GetTempXpsSavePath()
         {
-            return AppDomain.CurrentDomain.BaseDirectory + "\tempXpsFile.xps";
+            return AppDomain.CurrentDomain.BaseDirectory + "tempXpsFile.xps";
         }
 
         private static void ConvertXpsToPdf(string xpsFileName, string outputDirectory)

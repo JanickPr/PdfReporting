@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
+using System.Windows.Threading;
 
 namespace PdfReporting.Logic
 {
@@ -75,18 +76,14 @@ namespace PdfReporting.Logic
 
         private static void RenderFLowDocumentWhenDataSourceIsLoaded(FlowDocument flowDocument)
         {
-            Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            flowDocument.Dispatcher.Invoke(DispatcherPriority.Loaded, new Action(() =>
             {
-                RenderFlowDocument(flowDocument);
+                return;
             }));
-        }
-
-        private static void RenderFlowDocument(FlowDocument flowDocument)
-        {
-            FlowDocumentScrollViewer flowDocumentScrollViewer = new FlowDocumentScrollViewer { Document = flowDocument };
-            Window window = new Window { Content = flowDocumentScrollViewer };
-            window.Show();
-            window.Close();
+            //Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            //{
+            //    return;
+            //}));
         }
     }
 }
