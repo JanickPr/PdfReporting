@@ -42,23 +42,27 @@ namespace PdfReporting.Logic
             var taskCompletionSource = new TaskCompletionSource<object>();
             var thread = new Thread(() =>
             {
-                XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer();
-                foreach (var dataSourceItem in dataSourceList)
-                {
-                    if(progress != null)
-                        progress.Report(GetProcessingProgress(dataSourceItem, dataSourceList));
-
-                    if (token.IsCancellationRequested)
-                        return;
-
-                    xpsDocumentSplicer.AddXpsDocumentFrom(templateFilePath, dataSourceItem);
-                }
-                SaveAsPdf(xpsDocumentSplicer, outputDirectory);
+                CreatePdfReportFromObjectList(templateFilePath, dataSourceList, outputDirectory, token, progress);
             });
 
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
             return taskCompletionSource.Task;
+        }
+
+        public static void CreatePdfReportFromObjectList<T>(string templateFilePath, IEnumerable<T> dataSourceList, string outputDirectory,
+                                                                       CancellationToken token = default, IProgress<int> progress = null)
+        {
+            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer();
+            foreach (var dataSourceItem in dataSourceList)
+            {
+                if (progress != null)
+                    progress.Report(GetProcessingProgress(dataSourceItem, dataSourceList));
+                if (token.IsCancellationRequested)
+                    return;
+                xpsDocumentSplicer.AddXpsDocumentFrom(templateFilePath, dataSourceItem);
+            }
+            SaveAsPdf(xpsDocumentSplicer, outputDirectory);
         }
 
         private static int GetProcessingProgress<T>(T dataSourceItem, IEnumerable<T> dataSourceList)
