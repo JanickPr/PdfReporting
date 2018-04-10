@@ -5,6 +5,7 @@ using System.IO.Packaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Xps;
@@ -52,7 +53,9 @@ namespace PdfReporting.Logic
 
         private DocumentPaginator GetDocumentPaginatorFrom(FlowDocument flowDocument)
         {
-            return ((IDocumentPaginatorSource)flowDocument).DocumentPaginator;
+            DocumentPaginator paginator = ((IDocumentPaginatorSource)flowDocument).DocumentPaginator;
+            paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default);
+            return paginator;
         }       
 
         public new FixedDocumentSequence GetFixedDocumentSequence()

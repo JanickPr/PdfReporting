@@ -80,10 +80,6 @@ namespace PdfReporting.Logic
             {
                 return;
             }));
-            //Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
-            //{
-            //    return;
-            //}));
         }
     }
 }
