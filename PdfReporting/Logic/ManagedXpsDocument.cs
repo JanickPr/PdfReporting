@@ -16,12 +16,15 @@ namespace PdfReporting.Logic
 {
     public class ManagedXpsDocument : XpsDocument
     {
+        private XpsHeaderAndFooterDefinition _xpsHeaderAndFooterDefinition;
+
         public Uri PackageUri { get; set; }
 
-        public ManagedXpsDocument(Uri packageUri, Package package) : base(package, CompressionOption.NotCompressed, packageUri.ToString())
+        public ManagedXpsDocument(Uri packageUri, Package package, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition) : base(package, CompressionOption.NotCompressed, packageUri.ToString())
         {
             PackageUri = packageUri;
             RegisterAtPackageStoreWith(package, packageUri);
+            _xpsHeaderAndFooterDefinition = xpsHeaderAndFooterDefinition;
         }
 
         private void RegisterAtPackageStoreWith(Package package, Uri packageUri)
@@ -53,10 +56,9 @@ namespace PdfReporting.Logic
 
         private DocumentPaginator GetDocumentPaginatorFrom(FlowDocument flowDocument)
         {
-            DocumentPaginator paginator = ((IDocumentPaginatorSource)flowDocument).DocumentPaginator;
-            paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default);
+            DocumentPaginator paginator = new PimpedPaginator(flowDocument, _xpsHeaderAndFooterDefinition);
             return paginator;
-        }       
+        }
 
         public new FixedDocumentSequence GetFixedDocumentSequence()
         {

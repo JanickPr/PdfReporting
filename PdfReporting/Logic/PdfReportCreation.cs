@@ -32,17 +32,17 @@ namespace PdfReporting.Logic
 
         #region Methods
 
-        public static async Task CreatePdfReportFromObjectAsync<T>(string templateFilePath, T dataSourceObject, string outputDirectory, 
+        public static async Task CreatePdfReportFromObjectAsync<T>(string templateFolderPath, T dataSourceObject, string outputDirectory, 
                                                                    CancellationToken token = default, IProgress<int> progress = null)
-            => await CreatePdfReportFromObjectListAsync(templateFilePath, new List<T> { dataSourceObject }, outputDirectory, token, progress);
+            => await CreatePdfReportFromObjectListAsync(templateFolderPath, new List<T> { dataSourceObject }, outputDirectory, token, progress);
 
-        public static Task CreatePdfReportFromObjectListAsync<T>(string templateFilePath, IEnumerable<T> dataSourceList, string outputDirectory,
+        public static Task CreatePdfReportFromObjectListAsync<T>(string templateFolderPath, IEnumerable<T> dataSourceList, string outputDirectory,
                                                                        CancellationToken token = default, IProgress<int> progress = null)
         {
             var taskCompletionSource = new TaskCompletionSource<object>();
             var thread = new Thread(() =>
             {
-                CreatePdfReportFromObjectList(templateFilePath, dataSourceList, outputDirectory, token, progress);
+                CreatePdfReportFromObjectList(templateFolderPath, dataSourceList, outputDirectory, token, progress);
             });
 
             thread.SetApartmentState(ApartmentState.STA);
@@ -50,17 +50,17 @@ namespace PdfReporting.Logic
             return taskCompletionSource.Task;
         }
 
-        public static void CreatePdfReportFromObjectList<T>(string templateFilePath, IEnumerable<T> dataSourceList, string outputDirectory,
+        public static void CreatePdfReportFromObjectList<T>(string templateFolderPath, IEnumerable<T> dataSourceList, string outputDirectory,
                                                                        CancellationToken token = default, IProgress<int> progress = null)
         {
-            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer();
+            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer(templateFolderPath);
             foreach (var dataSourceItem in dataSourceList)
             {
                 if (progress != null)
                     progress.Report(GetProcessingProgress(dataSourceItem, dataSourceList));
                 if (token.IsCancellationRequested)
                     return;
-                xpsDocumentSplicer.AddXpsDocumentFrom(templateFilePath, dataSourceItem);
+                xpsDocumentSplicer.AddXpsDocumentWith(dataSourceItem);
             }
             SaveAsPdf(xpsDocumentSplicer, outputDirectory);
         }

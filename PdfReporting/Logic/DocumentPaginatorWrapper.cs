@@ -12,37 +12,36 @@ namespace PdfReporting.Logic
 {
     public class DocumentPaginatorWrapper : DocumentPaginator
     {
-        Size m_PageSize;
-        Size m_Margin;
-        DocumentPaginator m_Paginator;
-        Typeface m_Typeface;
+        private Size _PageSize, _Margin;
+        private DocumentPaginator _Paginator;
+        private Typeface _Typeface;
 
-        public override bool IsPageCountValid => m_Paginator.IsPageCountValid;
+        public override bool IsPageCountValid => _Paginator.IsPageCountValid;
 
-        public override int PageCount => m_Paginator.PageCount;
+        public override int PageCount => _Paginator.PageCount;
 
         public override Size PageSize
         {
             get
             {
-                return m_Paginator.PageSize;
+                return _Paginator.PageSize;
             }
             set
             {
-                m_Paginator.PageSize = value;
+                _Paginator.PageSize = value;
             }
         }
 
-        public override IDocumentPaginatorSource Source => m_Paginator.Source;
+        public override IDocumentPaginatorSource Source => _Paginator.Source;
 
         public DocumentPaginatorWrapper(DocumentPaginator paginator, Size pageSize, Size margin)
         {
-            m_PageSize = pageSize;
-            m_Margin = margin;
-            m_Paginator = paginator;
+            _PageSize = pageSize;
+            _Margin = margin;
+            _Paginator = paginator;
 
-            m_Paginator.PageSize = new Size(m_PageSize.Width - margin.Width * 2,
-                                            m_PageSize.Height - margin.Height * 2);
+            _Paginator.PageSize = new Size(_PageSize.Width - margin.Width * 2,
+                                            _PageSize.Height - margin.Height * 2);
         }
 
         Rect Move(Rect rect)
@@ -53,7 +52,7 @@ namespace PdfReporting.Logic
             }
             else
             {
-                return new Rect(rect.Left + m_Margin.Width, rect.Top + m_Margin.Height,
+                return new Rect(rect.Left + _Margin.Width, rect.Top + _Margin.Height,
                                 rect.Width, rect.Height);
             }
         }
@@ -61,8 +60,7 @@ namespace PdfReporting.Logic
         public override DocumentPage GetPage(int pageNumber)
         {
             FlowDocument doc = new FlowDocument();
-
-            DocumentPage page = m_Paginator.GetPage(pageNumber);
+            DocumentPage page = _Paginator.GetPage(pageNumber);
 
             // Create a wrapper visual for transformation and add extras
             ContainerVisual newpage = new ContainerVisual();
@@ -71,14 +69,14 @@ namespace PdfReporting.Logic
 
             using (DrawingContext ctx = title.RenderOpen())
             {
-                if (m_Typeface == null)
+                if (_Typeface == null)
                 {
-                    m_Typeface = new Typeface("Times New Roman");
+                    _Typeface = new Typeface("Times New Roman");
                 }
 
                 FormattedText text = new FormattedText("Page " + (pageNumber + 1),
                     System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                    m_Typeface, 14, Brushes.Black);
+                    _Typeface, 14, Brushes.Black);
 
                 ctx.DrawText(text, new Point(0, -96 / 4)); // 1/4 inch above page content
             }
@@ -100,12 +98,12 @@ namespace PdfReporting.Logic
             newpage.Children.Add(smallerPage);
             newpage.Children.Add(title);
 
-            newpage.Transform = new TranslateTransform(m_Margin.Width, m_Margin.Height);
+            newpage.Transform = new TranslateTransform(_Margin.Width, _Margin.Height);
 
-            return new DocumentPage(newpage, m_PageSize, Move(page.BleedBox), Move(page.ContentBox));
-        }
-
-   
+            return new DocumentPage(newpage, _PageSize, Move(page.BleedBox), Move(page.ContentBox));
+        } 
+        
+        
 
     }
 }

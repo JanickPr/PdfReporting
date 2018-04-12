@@ -88,7 +88,9 @@
     <Compile Include="Logic\ManagedXpsDocument.cs" />
     <Compile Include="Logic\PackageHelper.cs" />
     <Compile Include="Logic\PdfReportCreation.cs" />
+    <Compile Include="Logic\PimpedPaginator.cs" />
     <Compile Include="Logic\XpsDocumentSplicer.cs" />
+    <Compile Include="Logic\XpsHeaderAndFooterDefinition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

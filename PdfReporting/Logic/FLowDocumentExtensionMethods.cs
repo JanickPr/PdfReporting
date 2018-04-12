@@ -14,11 +14,12 @@ namespace PdfReporting.Logic
 {
     public static class FLowDocumentExtensionMethods
     {
-        public static FlowDocument InitializeFlowDocumentReportWith<T>(this FlowDocument flowDocument, string reportTemplateFilePath, T dataSourceObject)
+        public static FlowDocument InitializeFlowDocumentReportWith<T>(this FlowDocument flowDocument, string templateFilePath, T dataSourceObject)
         {
-            flowDocument = GetFlowDocumentFrom(reportTemplateFilePath);
+            flowDocument = GetFlowDocumentFrom(templateFilePath);
             flowDocument.SetUpDataContext(dataSourceObject);
             return flowDocument;
+            
         }
 
         private static FlowDocument GetFlowDocumentFrom(string templateFilePath)

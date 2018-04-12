@@ -19,31 +19,92 @@ namespace PdfReporting.Logic
     /// </summary>
     public class XpsDocumentSplicer : List<ManagedXpsDocument>
     {
-        public void AddXpsDocumentFrom<T>(string templateFilePath, T dataSourceObject)
+        string _templateFolderPath;
+
+        public XpsDocumentSplicer(string templateFolderPath)
+        {
+            _templateFolderPath = templateFolderPath;
+        }
+
+        public void AddXpsDocumentWith<T>(T dataSourceObject)
         {
             FlowDocument flowDocument = new FlowDocument();
-            flowDocument = flowDocument.InitializeFlowDocumentReportWith(templateFilePath, dataSourceObject);
+            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
+            flowDocument = flowDocument.InitializeFlowDocumentReportWith(bodyTemplateFilePath, dataSourceObject);
             this.AddXpsDocumentWithContentFrom(flowDocument);
+        }
+
+        private static string GetBodyTemplateFilePathFrom(string templateFolderPath)
+        {
+            try
+            {
+                List<string> folderContent = getAllFileNamesFrom(templateFolderPath);
+                return folderContent.First(fileName => fileName.EndsWith("BodyTemplate.xaml"));
+            }
+            catch (Exception)
+            {
+                throw new NullReferenceException("The folder does not contain any file ending with 'BodyTemplate.xaml'.");
+            }
         }
 
         private void AddXpsDocumentWithContentFrom(FlowDocument flowDocument)
         {
-            ManagedXpsDocument managedXpsDocument = CreateManagedXpsDocumentFromFlowDocument(flowDocument);
+            ManagedXpsDocument managedXpsDocument = CreateManagedXpsDocumentFrom(flowDocument);
             this.Add(managedXpsDocument);
         }
 
-        private ManagedXpsDocument CreateManagedXpsDocumentFromFlowDocument(FlowDocument flowDocument)
+        private ManagedXpsDocument CreateManagedXpsDocumentFrom(FlowDocument flowDocument)
         {
-            ManagedXpsDocument managedXpsDocument = GetNewManagedXpsDocument();
+            XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition = GetXpsHeaderAndFooterDefinitionWith(flowDocument.DataContext);
+            ManagedXpsDocument managedXpsDocument = GetNewManagedXpsDocument(xpsHeaderAndFooterDefinition);
             managedXpsDocument.CreateContentFromFlowDocument(flowDocument);
             return managedXpsDocument;
         }
 
-        private ManagedXpsDocument GetNewManagedXpsDocument()
+        private XpsHeaderAndFooterDefinition GetXpsHeaderAndFooterDefinitionWith(object dataContext)
+        {
+            string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(_templateFolderPath);
+            string footerTemplateFilePath = GetFooterTemplateFilePathFrom(_templateFolderPath);
+            return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext);
+        }
+
+        private string GetHeaderTemplateFilePathFrom(string templateFolderPath)
+        {
+            try
+            {
+                List<string> folderContent = getAllFileNamesFrom(templateFolderPath);
+                return folderContent.First(fileName => fileName.EndsWith("HeaderTemplate.xaml"));
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        private string GetFooterTemplateFilePathFrom(string templateFolderPath)
+        {
+            try
+            {
+                List<string> folderContent = getAllFileNamesFrom(templateFolderPath);
+                return folderContent.First(fileName => fileName.EndsWith("FooterTemplate.xaml"));
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+                
+        }
+
+        private static List<string> getAllFileNamesFrom(string templateFolderPath)
+        {
+            return Directory.GetFiles(templateFolderPath).ToList();
+        }
+
+        private ManagedXpsDocument GetNewManagedXpsDocument(XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition)
         {
             Uri packageUri = GetNewIndexedPackageUri();
             Package package = GetNewPackageAt(packageUri);
-            return new ManagedXpsDocument(packageUri, package);
+            return new ManagedXpsDocument(packageUri, package, xpsHeaderAndFooterDefinition);
         }
 
         private Uri GetNewIndexedPackageUri()
