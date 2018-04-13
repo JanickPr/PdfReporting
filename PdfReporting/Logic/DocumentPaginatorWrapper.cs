@@ -12,36 +12,38 @@ namespace PdfReporting.Logic
 {
     public class DocumentPaginatorWrapper : DocumentPaginator
     {
-        private Size _PageSize, _Margin;
-        private DocumentPaginator _Paginator;
-        private Typeface _Typeface;
+        private Size _pageSize, _margin;
+        private readonly XpsHeaderAndFooterDefinition _xpsHeaderAndFooterDefinition;
+        private DocumentPaginator _paginator;
+        private Typeface _typeface;
 
-        public override bool IsPageCountValid => _Paginator.IsPageCountValid;
+        public override bool IsPageCountValid => _paginator.IsPageCountValid;
 
-        public override int PageCount => _Paginator.PageCount;
+        public override int PageCount => _paginator.PageCount;
 
         public override Size PageSize
         {
             get
             {
-                return _Paginator.PageSize;
+                return _paginator.PageSize;
             }
             set
             {
-                _Paginator.PageSize = value;
+                _paginator.PageSize = value;
             }
         }
 
-        public override IDocumentPaginatorSource Source => _Paginator.Source;
+        public override IDocumentPaginatorSource Source => _paginator.Source;
 
-        public DocumentPaginatorWrapper(DocumentPaginator paginator, Size pageSize, Size margin)
+        public DocumentPaginatorWrapper(DocumentPaginator paginator, Size pageSize, Size margin, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition)
         {
-            _PageSize = pageSize;
-            _Margin = margin;
-            _Paginator = paginator;
+            _pageSize = pageSize;
+            _margin = margin;
+            this._xpsHeaderAndFooterDefinition = xpsHeaderAndFooterDefinition;
+            _paginator = paginator;
 
-            _Paginator.PageSize = new Size(_PageSize.Width - margin.Width * 2,
-                                            _PageSize.Height - margin.Height * 2);
+            _paginator.PageSize = new Size(_pageSize.Width - margin.Width * 2,
+                                            _pageSize.Height - margin.Height * 2);
         }
 
         Rect Move(Rect rect)
@@ -52,7 +54,7 @@ namespace PdfReporting.Logic
             }
             else
             {
-                return new Rect(rect.Left + _Margin.Width, rect.Top + _Margin.Height,
+                return new Rect(rect.Left + _margin.Width, rect.Top + _margin.Height,
                                 rect.Width, rect.Height);
             }
         }
@@ -60,7 +62,7 @@ namespace PdfReporting.Logic
         public override DocumentPage GetPage(int pageNumber)
         {
             FlowDocument doc = new FlowDocument();
-            DocumentPage page = _Paginator.GetPage(pageNumber);
+            DocumentPage page = _paginator.GetPage(pageNumber);
 
             // Create a wrapper visual for transformation and add extras
             ContainerVisual newpage = new ContainerVisual();
@@ -69,14 +71,14 @@ namespace PdfReporting.Logic
 
             using (DrawingContext ctx = title.RenderOpen())
             {
-                if (_Typeface == null)
+                if (_typeface == null)
                 {
-                    _Typeface = new Typeface("Times New Roman");
+                    _typeface = new Typeface("Times New Roman");
                 }
 
                 FormattedText text = new FormattedText("Page " + (pageNumber + 1),
                     System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                    _Typeface, 14, Brushes.Black);
+                    _typeface, 14, Brushes.Black);
 
                 ctx.DrawText(text, new Point(0, -96 / 4)); // 1/4 inch above page content
             }
@@ -88,19 +90,20 @@ namespace PdfReporting.Logic
                 ctx.DrawRectangle(new SolidColorBrush(Color.FromRgb(240, 240, 240)), null, page.ContentBox);
             }
 
-            newpage.Children.Add(background); // Scale down page and center
+            //newpage.Children.Add(background); // Scale down page and center
+            newpage.Children.Add(_xpsHeaderAndFooterDefinition.HeaderVisual);
 
             ContainerVisual smallerPage = new ContainerVisual();
             smallerPage.Children.Add(page.Visual);
             smallerPage.Transform = new MatrixTransform(0.95, 0, 0, 0.95,
                 0.025 * page.ContentBox.Width, 0.025 * page.ContentBox.Height);
-
+            
             newpage.Children.Add(smallerPage);
             newpage.Children.Add(title);
 
-            newpage.Transform = new TranslateTransform(_Margin.Width, _Margin.Height);
+            newpage.Transform = new TranslateTransform(_margin.Width, _margin.Height);
 
-            return new DocumentPage(newpage, _PageSize, Move(page.BleedBox), Move(page.ContentBox));
+            return new DocumentPage(newpage, _pageSize, Move(page.BleedBox), Move(page.ContentBox));
         } 
         
         

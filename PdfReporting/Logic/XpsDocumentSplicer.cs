@@ -28,10 +28,10 @@ namespace PdfReporting.Logic
 
         public void AddXpsDocumentWith<T>(T dataSourceObject)
         {
-            FlowDocument flowDocument = new FlowDocument();
+            ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
             string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
-            flowDocument = flowDocument.InitializeFlowDocumentReportWith(bodyTemplateFilePath, dataSourceObject);
-            this.AddXpsDocumentWithContentFrom(flowDocument);
+            managedFlowDocument = managedFlowDocument.InitializeFlowDocumentReportWith(bodyTemplateFilePath, dataSourceObject);
+            this.AddXpsDocumentWithContentFrom(managedFlowDocument);
         }
 
         private static string GetBodyTemplateFilePathFrom(string templateFolderPath)
@@ -47,17 +47,17 @@ namespace PdfReporting.Logic
             }
         }
 
-        private void AddXpsDocumentWithContentFrom(FlowDocument flowDocument)
+        private void AddXpsDocumentWithContentFrom(ManagedFlowDocument managedFlowDocument)
         {
-            ManagedXpsDocument managedXpsDocument = CreateManagedXpsDocumentFrom(flowDocument);
+            ManagedXpsDocument managedXpsDocument = CreateManagedXpsDocumentFrom(managedFlowDocument);
             this.Add(managedXpsDocument);
         }
 
-        private ManagedXpsDocument CreateManagedXpsDocumentFrom(FlowDocument flowDocument)
+        private ManagedXpsDocument CreateManagedXpsDocumentFrom(ManagedFlowDocument managedFlowDocument)
         {
-            XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition = GetXpsHeaderAndFooterDefinitionWith(flowDocument.DataContext);
+            XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition = GetXpsHeaderAndFooterDefinitionWith(managedFlowDocument.DataContext);
             ManagedXpsDocument managedXpsDocument = GetNewManagedXpsDocument(xpsHeaderAndFooterDefinition);
-            managedXpsDocument.CreateContentFromFlowDocument(flowDocument);
+            managedXpsDocument.CreateContentFromFlowDocument(managedFlowDocument);
             return managedXpsDocument;
         }
 

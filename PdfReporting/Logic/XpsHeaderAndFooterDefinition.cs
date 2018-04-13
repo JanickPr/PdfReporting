@@ -1,77 +1,123 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Markup;
 using System.Windows.Media;
+using System.Runtime.Serialization;
+using PdfReporting.Logic;
 
 namespace PdfReporting.Logic
 {
-    public class XpsHeaderAndFooterDefinition {
+    public class XpsHeaderAndFooterDefinition
+    {
 
         #region Page sizes
 
-        private Thickness _Margins = new Thickness(96); // Default: 1" margins
-        private Size _PageSize = new Size(793.5987, 1122.3987); // Default: A4
-        private bool _RepeatTableHeaders = true;
-        private double _HeaderHeight;
-        private double _FooterHeight;
+        private Thickness _margins = new Thickness(96); // Default: 1" margins
+        private Size _pageSize = new Size(793.5987, 1122.3987); // Default: A4
+        private bool _repeatTableHeaders = true;
+        private double _headerHeight;
+        private double _footerHeight;
+        private Visual _headerVisual;
+        private Visual _footerVisual;
+        private readonly string _headerTemplateFilePath;
+        private readonly string _footerTemplateFilePath;
+        private readonly object _dataSourceObject;
 
         public Visual HeaderVisual
         {
-            get; set;
+            get => GetVisualFromTemplate(_headerTemplateFilePath, _dataSourceObject);
         }
 
         public Visual FooterVisual
         {
-            get; set;
+            get => GetVisualFromTemplate(_footerTemplateFilePath, _dataSourceObject);
         }
 
         /// <summary>
         /// PageSize in DIUs
         /// </summary>
-        public Size PageSize {
-			get { return _PageSize; }
-			set { _PageSize = value; }
-		}
+        public Size PageSize
+        {
+            get
+            {
+                return _pageSize;
+            }
+            set
+            {
+                _pageSize = value;
+            }
+        }
 
-		/// <summary>
-		/// Margins
-		/// </summary>
-		public Thickness Margins {
-			get { return _Margins; }
-			set { _Margins = value; }
-		}
-			
+        /// <summary>
+        /// Margins
+        /// </summary>
+        public Thickness Margins
+        {
+            get
+            {
+                return _margins;
+            }
+            set
+            {
+                _margins = value;
+            }
+        }
 
 
-		/// <summary>
-		/// Space reserved for the header in DIUs
-		/// </summary>
-		public double HeaderHeight {
-			get { return _HeaderHeight; }
-			set { _HeaderHeight = value; }
-		}
 
-		/// <summary>
-		/// Space reserved for the footer in DIUs
-		/// </summary>
-		public double FooterHeight {
-			get { return _FooterHeight; }
-			set { _FooterHeight = value; }
-		}
+        /// <summary>
+        /// Space reserved for the header in DIUs
+        /// </summary>
+        public double HeaderHeight
+        {
+            get
+            {
+                return _headerHeight;
+            }
+            set
+            {
+                _headerHeight = value;
+            }
+        }
 
-		#endregion
+        /// <summary>
+        /// Space reserved for the footer in DIUs
+        /// </summary>
+        public double FooterHeight
+        {
+            get
+            {
+                return _footerHeight;
+            }
+            set
+            {
+                _footerHeight = value;
+            }
+        }
+
+        #endregion
 
         ///<summary>
         /// Should table headers automatically repeat?
         ///</summary>
-        public bool RepeatTableHeaders {
-			get { return _RepeatTableHeaders; }
-			set { _RepeatTableHeaders = value; }
-		}
+        public bool RepeatTableHeaders
+        {
+            get
+            {
+                return _repeatTableHeaders;
+            }
+            set
+            {
+                _repeatTableHeaders = value;
+            }
+        }
 
         #region Some convenient helper properties
 
@@ -121,13 +167,9 @@ namespace PdfReporting.Logic
 
         public XpsHeaderAndFooterDefinition(String headerTemplateFilePath, String footerTemplateFilePath, object dataSourceObject)
         {
-            CreateHeaderAndFooterVisualFrom(headerTemplateFilePath, footerTemplateFilePath, dataSourceObject);
-        }
-
-        private void CreateHeaderAndFooterVisualFrom(string headerTemplateFilePath, string footerTemplateFilePath, object dataSourceObject)
-        {
-            HeaderVisual = GetVisualFromTemplate(headerTemplateFilePath, dataSourceObject);
-            FooterVisual = GetVisualFromTemplate(footerTemplateFilePath, dataSourceObject);
+            this._headerTemplateFilePath = headerTemplateFilePath;
+            this._footerTemplateFilePath = footerTemplateFilePath;
+            this._dataSourceObject = dataSourceObject;
         }
 
         private Visual GetVisualFromTemplate(string templateFilePath, object dataSourceObject)
@@ -135,16 +177,18 @@ namespace PdfReporting.Logic
             if (templateFilePath == null)
                 return null;
 
-            FlowDocument flowDocument = GetFlowDocumentFromTemplate(templateFilePath);
-            flowDocument.SetUpDataContext(dataSourceObject);
-            return ((IDocumentPaginatorSource)flowDocument).DocumentPaginator.GetPage(0).Visual;
+            ManagedFlowDocument managedFlowDocument = GetFlowDocumentFromTemplate(templateFilePath);
+            managedFlowDocument.SetUpDataContext(dataSourceObject);
+            var visual = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator.GetPage(0).Visual;
+            //managedFlowDocument.RemoveLogicalChild(visual);
+            return visual;
         }
 
-        private FlowDocument GetFlowDocumentFromTemplate(string templateFilePath)
+        private ManagedFlowDocument GetFlowDocumentFromTemplate(string templateFilePath)
         {
-            FlowDocument flowDocument = new FlowDocument();
-            flowDocument = flowDocument.LoadFromTemplate(templateFilePath);
-            return flowDocument;
+            ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
+            managedFlowDocument = managedFlowDocument.LoadFromTemplate(templateFilePath);
+            return managedFlowDocument;
         }
 
         #endregion

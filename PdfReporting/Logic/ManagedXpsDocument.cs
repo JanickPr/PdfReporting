@@ -42,10 +42,10 @@ namespace PdfReporting.Logic
             return PackageStore.GetPackage(packageUri) != null;
         }
 
-        public void CreateContentFromFlowDocument(FlowDocument flowDocument)
+        public void CreateContentFromFlowDocument(ManagedFlowDocument managedFlowDocument)
         {
             XpsSerializationManager xpsSerializationManager = GetXpsSerializationManager();
-            DocumentPaginator documentPaginator = GetDocumentPaginatorFrom(flowDocument);
+            DocumentPaginator documentPaginator = GetDocumentPaginatorFrom(managedFlowDocument);
             xpsSerializationManager.SaveAsXaml(documentPaginator);
         }
 
@@ -54,9 +54,10 @@ namespace PdfReporting.Logic
             return new XpsSerializationManager(new XpsPackagingPolicy(this), false);
         }
 
-        private DocumentPaginator GetDocumentPaginatorFrom(FlowDocument flowDocument)
+        private DocumentPaginator GetDocumentPaginatorFrom(ManagedFlowDocument managedFlowDocument)
         {
-            DocumentPaginator paginator = new PimpedPaginator(flowDocument, _xpsHeaderAndFooterDefinition);
+            DocumentPaginator paginator = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator;
+            paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default, _xpsHeaderAndFooterDefinition);
             return paginator;
         }
 
