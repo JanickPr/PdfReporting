@@ -56,8 +56,9 @@ namespace PdfReporting.Logic
 
         private DocumentPaginator GetDocumentPaginatorFrom(ManagedFlowDocument managedFlowDocument)
         {
-            DocumentPaginator paginator = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator;
-            paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default, _xpsHeaderAndFooterDefinition);
+            //DocumentPaginator paginator = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator;
+            //paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default, _xpsHeaderAndFooterDefinition);
+            var paginator = new PimpedPaginator(managedFlowDocument, _xpsHeaderAndFooterDefinition);
             return paginator;
         }
 

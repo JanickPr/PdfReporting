@@ -91,15 +91,17 @@ namespace PdfReporting.Logic
             }
 
             //newpage.Children.Add(background); // Scale down page and center
-            newpage.Children.Add(_xpsHeaderAndFooterDefinition.HeaderVisual);
+            
 
             ContainerVisual smallerPage = new ContainerVisual();
             smallerPage.Children.Add(page.Visual);
-            smallerPage.Transform = new MatrixTransform(0.95, 0, 0, 0.95,
-                0.025 * page.ContentBox.Width, 0.025 * page.ContentBox.Height);
-            
+            //smallerPage.Children.Add(_xpsHeaderAndFooterDefinition.HeaderVisual);
+            smallerPage.Transform = new MatrixTransform(0.5, 0, 0, 0.5,
+                0.1 * page.ContentBox.Width, 0.025 * page.ContentBox.Height);
             newpage.Children.Add(smallerPage);
             newpage.Children.Add(title);
+
+            
 
             newpage.Transform = new TranslateTransform(_margin.Width, _margin.Height);
 

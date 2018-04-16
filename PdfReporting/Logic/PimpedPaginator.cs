@@ -45,10 +45,10 @@ namespace PdfReporting.Logic
 			// the original.
 			MemoryStream stream = new MemoryStream();
 			TextRange sourceDocument = new TextRange(document.ContentStart, document.ContentEnd);
-			sourceDocument.Save(stream, DataFormats.Xaml);
+			sourceDocument.Save(stream, DataFormats.XamlPackage);
 			FlowDocument copy = new FlowDocument();
 			TextRange copyDocumentRange = new TextRange(copy.ContentStart, copy.ContentEnd);
-			copyDocumentRange.Load(stream, DataFormats.Xaml);
+			copyDocumentRange.Load(stream, DataFormats.XamlPackage);
 			this.paginator = ((IDocumentPaginatorSource)copy).DocumentPaginator;
 			this.definition = def;
 			paginator.PageSize = def.ContentSize;
@@ -65,23 +65,28 @@ namespace PdfReporting.Logic
 			// Use default paginator to handle pagination
 			Visual originalPage = paginator.GetPage(pageNumber).Visual;
 
-			Console.WriteLine("--- Begin Page {0} -------", pageNumber + 1);
-			//originalPage.DumpVisualTree(Console.Out); die Methode existiert nicht
-			Console.WriteLine("--- End Page {0} -------", pageNumber + 1);
-			Console.WriteLine();
+			//Console.WriteLine("--- Begin Page {0} -------", pageNumber + 1);
+			//originalPage.DumpVisualTree(Console.Out); //die Methode existiert nicht
+			//Console.WriteLine("--- End Page {0} -------", pageNumber + 1);
+			//Console.WriteLine();
 
 			ContainerVisual visual = new ContainerVisual();
-			ContainerVisual pageVisual = new ContainerVisual() {
-				Transform = new TranslateTransform(
-					definition.ContentOrigin.X, 
-					definition.ContentOrigin.Y
-				)
-			};
-			pageVisual.Children.Add(originalPage);
-			visual.Children.Add(pageVisual);
+            ContainerVisual pageVisual = new ContainerVisual()
+            {
+                Transform = new TranslateTransform(
+                    definition.ContentOrigin.X,
+                    definition.ContentOrigin.Y
+                )
 
-			// Create headers and footers
-			if(definition.HeaderVisual != null) {
+            };
+            pageVisual.Children.Add(originalPage);
+
+            visual.Children.Add(pageVisual);
+
+            //Create headers and footers
+
+            if (definition.HeaderVisual != null)
+            {
                 visual.Children.Add(definition.HeaderVisual);
             }
             if (definition.FooterVisual != null)
@@ -90,67 +95,67 @@ namespace PdfReporting.Logic
             }
 
             // Check for repeating table headers
-            if (definition.RepeatTableHeaders) {
-				// Find table header
-				ContainerVisual table;
-				if(PageStartsWithTable(originalPage, out table) && currentHeader != null) {
-					// The page starts with a table and a table header was
-					// found on the previous page. Presumably this table 
-					// was started on the previous page, so we'll repeat the
-					// table header.
-					Rect headerBounds = VisualTreeHelper.GetDescendantBounds(currentHeader);
-					Vector offset = VisualTreeHelper.GetOffset(currentHeader);
-					ContainerVisual tableHeaderVisual = new ContainerVisual();
-					
-					// Translate the header to be at the top of the page
-					// instead of its previous position
-					tableHeaderVisual.Transform = new TranslateTransform(
-						definition.ContentOrigin.X,
-						definition.ContentOrigin.Y - headerBounds.Top
-					);
+            //         if (definition.RepeatTableHeaders) {
+            //	// Find table header
+            //	ContainerVisual table;
+            //	if(PageStartsWithTable(originalPage, out table) && currentHeader != null) {
+            //		// The page starts with a table and a table header was
+            //		// found on the previous page. Presumably this table 
+            //		// was started on the previous page, so we'll repeat the
+            //		// table header.
+            //		Rect headerBounds = VisualTreeHelper.GetDescendantBounds(currentHeader);
+            //		Vector offset = VisualTreeHelper.GetOffset(currentHeader);
+            //		ContainerVisual tableHeaderVisual = new ContainerVisual();
 
-					// Since we've placed the repeated table header on top of the
-					// content area, we'll need to scale down the rest of the content
-					// to accomodate this. Since the table header is relatively small,
-					// this probably is barely noticeable.
-					double yScale = (definition.ContentSize.Height - headerBounds.Height) / definition.ContentSize.Height;
-					TransformGroup group = new TransformGroup();
-					group.Children.Add(new ScaleTransform(1.0, yScale));
-					group.Children.Add(new TranslateTransform(
-						definition.ContentOrigin.X,
-						definition.ContentOrigin.Y + headerBounds.Height
-					));
-					pageVisual.Transform = group;
+            //		// Translate the header to be at the top of the page
+            //		// instead of its previous position
+            //		tableHeaderVisual.Transform = new TranslateTransform(
+            //			definition.ContentOrigin.X,
+            //			definition.ContentOrigin.Y - headerBounds.Top
+            //		);
 
-					ContainerVisual cp = VisualTreeHelper.GetParent(currentHeader) as ContainerVisual;
-					if(cp != null) {
-						cp.Children.Remove(currentHeader);
-					}
-					tableHeaderVisual.Children.Add(currentHeader);
-					visual.Children.Add(tableHeaderVisual);
-				}
+            //		// Since we've placed the repeated table header on top of the
+            //		// content area, we'll need to scale down the rest of the content
+            //		// to accomodate this. Since the table header is relatively small,
+            //		// this probably is barely noticeable.
+            //		double yScale = (definition.ContentSize.Height - headerBounds.Height) / definition.ContentSize.Height;
+            //		TransformGroup group = new TransformGroup();
+            //		group.Children.Add(new ScaleTransform(1.0, yScale));
+            //		group.Children.Add(new TranslateTransform(
+            //			definition.ContentOrigin.X,
+            //			definition.ContentOrigin.Y + headerBounds.Height
+            //		));
+            //		pageVisual.Transform = group;
 
-				// Check if there is a table on the bottom of the page.
-				// If it's there, its header should be repeated
-				ContainerVisual newTable, newHeader;
-				if(PageEndsWithTable(originalPage, out newTable, out newHeader)) {
-					if(newTable == table) {
-						// Still the same table so don't change the repeating header
-					} else {
-						// We've found a new table. Repeat the header on the next page
-						currentHeader = newHeader;
-					}
-				} else {
-					// There was no table at the end of the page
-					currentHeader = null;
-				}
-			}
+            //		ContainerVisual cp = VisualTreeHelper.GetParent(currentHeader) as ContainerVisual;
+            //		if(cp != null) {
+            //			cp.Children.Remove(currentHeader);
+            //		}
+            //		tableHeaderVisual.Children.Add(currentHeader);
+            //		visual.Children.Add(tableHeaderVisual);
+            //	}
 
-			return new DocumentPage(
+            //	// Check if there is a table on the bottom of the page.
+            //	// If it's there, its header should be repeated
+            //	ContainerVisual newTable, newHeader;
+            //	if(PageEndsWithTable(originalPage, out newTable, out newHeader)) {
+            //		if(newTable == table) {
+            //			// Still the same table so don't change the repeating header
+            //		} else {
+            //			// We've found a new table. Repeat the header on the next page
+            //			currentHeader = newHeader;
+            //		}
+            //	} else {
+            //		// There was no table at the end of the page
+            //		currentHeader = null;
+            //	}
+            //}
+
+            return new DocumentPage(
 				visual, 
 				definition.PageSize, 
-				new Rect(new Point(), definition.PageSize),
-				new Rect(definition.ContentOrigin, definition.ContentSize)
+				new Rect(definition.PageSize),
+				new Rect(definition.ContentSize)
 			);
 		}
 

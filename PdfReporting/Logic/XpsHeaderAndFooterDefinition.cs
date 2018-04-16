@@ -126,8 +126,8 @@ namespace PdfReporting.Logic
             get
             {
                 return new Size(
-                    Margins.Left + Margins.Right,
-                    Margins.Top + Margins.Bottom + HeaderHeight + FooterHeight
+                   PageSize.Width - (Margins.Left + Margins.Right),
+                   PageSize.Height - (Margins.Top + Margins.Bottom + HeaderHeight + FooterHeight)
                 );
             }
         }
