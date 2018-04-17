@@ -24,21 +24,16 @@ namespace PdfReporting.Logic
         private bool _repeatTableHeaders = true;
         private double _headerHeight;
         private double _footerHeight;
-        private Visual _headerVisual;
-        private Visual _footerVisual;
         private readonly string _headerTemplateFilePath;
         private readonly string _footerTemplateFilePath;
+        private readonly string _bodyTemplateFilePath;
         private readonly object _dataSourceObject;
 
-        public Visual HeaderVisual
-        {
-            get => GetVisualFromTemplate(_headerTemplateFilePath, _dataSourceObject);
-        }
+        public Visual HeaderVisual => GetVisualFromTemplate(_headerTemplateFilePath, _dataSourceObject);
+        
+        public Visual FooterVisual => GetVisualFromTemplate(_footerTemplateFilePath, _dataSourceObject);
 
-        public Visual FooterVisual
-        {
-            get => GetVisualFromTemplate(_footerTemplateFilePath, _dataSourceObject);
-        }
+        public Visual BodyVisual => GetVisualFromTemplate(_bodyTemplateFilePath, _dataSourceObject);
 
         /// <summary>
         /// PageSize in DIUs
@@ -165,10 +160,11 @@ namespace PdfReporting.Logic
             }
         }
 
-        public XpsHeaderAndFooterDefinition(String headerTemplateFilePath, String footerTemplateFilePath, object dataSourceObject)
+        public XpsHeaderAndFooterDefinition(String headerTemplateFilePath, String footerTemplateFilePath, String bodyTemplateFilePath, object dataSourceObject)
         {
             this._headerTemplateFilePath = headerTemplateFilePath;
             this._footerTemplateFilePath = footerTemplateFilePath;
+            this._bodyTemplateFilePath = bodyTemplateFilePath;
             this._dataSourceObject = dataSourceObject;
         }
 

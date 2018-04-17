@@ -65,7 +65,8 @@ namespace PdfReporting.Logic
         {
             string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(_templateFolderPath);
             string footerTemplateFilePath = GetFooterTemplateFilePathFrom(_templateFolderPath);
-            return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext);
+            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
+            return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, bodyTemplateFilePath, dataContext);
         }
 
         private string GetHeaderTemplateFilePathFrom(string templateFolderPath)

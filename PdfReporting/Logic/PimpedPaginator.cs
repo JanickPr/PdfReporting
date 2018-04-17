@@ -40,16 +40,18 @@ namespace PdfReporting.Logic
 
 
         public PimpedPaginator(FlowDocument document, XpsHeaderAndFooterDefinition def) {
-			// Create a copy of the flow document,
-			// so we can modify it without modifying
-			// the original.
+            // Create a copy of the flow document,
+            // so we can modify it without modifying
+            // the original.
+            DocumentPaginator paginator = ((IDocumentPaginatorSource)document).DocumentPaginator;
 			MemoryStream stream = new MemoryStream();
 			TextRange sourceDocument = new TextRange(document.ContentStart, document.ContentEnd);
 			sourceDocument.Save(stream, DataFormats.XamlPackage);
-			FlowDocument copy = new FlowDocument();
+			ManagedFlowDocument copy = new ManagedFlowDocument();
 			TextRange copyDocumentRange = new TextRange(copy.ContentStart, copy.ContentEnd);
 			copyDocumentRange.Load(stream, DataFormats.XamlPackage);
 			this.paginator = ((IDocumentPaginatorSource)copy).DocumentPaginator;
+            this.paginator = paginator;
 			this.definition = def;
 			paginator.PageSize = def.ContentSize;
 
@@ -80,7 +82,7 @@ namespace PdfReporting.Logic
 
             };
             pageVisual.Children.Add(originalPage);
-
+                        
             visual.Children.Add(pageVisual);
 
             //Create headers and footers
