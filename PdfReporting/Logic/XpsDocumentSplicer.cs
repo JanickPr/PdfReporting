@@ -30,7 +30,7 @@ namespace PdfReporting.Logic
         {
             ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
             string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
-            managedFlowDocument = managedFlowDocument.InitializeFlowDocumentReportWith(bodyTemplateFilePath, dataSourceObject);
+            managedFlowDocument = managedFlowDocument.InitializeFlowDocumentWith(bodyTemplateFilePath, dataSourceObject);
             this.AddXpsDocumentWithContentFrom(managedFlowDocument);
         }
 
@@ -66,7 +66,7 @@ namespace PdfReporting.Logic
             string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(_templateFolderPath);
             string footerTemplateFilePath = GetFooterTemplateFilePathFrom(_templateFolderPath);
             string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
-            return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, bodyTemplateFilePath, dataContext);
+            return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext);
         }
 
         private string GetHeaderTemplateFilePathFrom(string templateFolderPath)

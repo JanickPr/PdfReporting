@@ -19,7 +19,7 @@ namespace PdfReporting.Logic
 
         #region Page sizes
 
-        private Thickness _margins = new Thickness(96); // Default: 1" margins
+        private Thickness _margins;// = new Thickness(96); // Default: 1" margins
         private Size _pageSize = new Size(793.5987, 1122.3987); // Default: A4
         private bool _repeatTableHeaders = true;
         private double _headerHeight;
@@ -32,8 +32,6 @@ namespace PdfReporting.Logic
         public Visual HeaderVisual => GetVisualFromTemplate(_headerTemplateFilePath, _dataSourceObject);
         
         public Visual FooterVisual => GetVisualFromTemplate(_footerTemplateFilePath, _dataSourceObject);
-
-        public Visual BodyVisual => GetVisualFromTemplate(_bodyTemplateFilePath, _dataSourceObject);
 
         /// <summary>
         /// PageSize in DIUs
@@ -74,11 +72,7 @@ namespace PdfReporting.Logic
         {
             get
             {
-                return _headerHeight;
-            }
-            set
-            {
-                _headerHeight = value;
+                return GetHeightOfTemplate(_headerTemplateFilePath, _dataSourceObject);
             }
         }
 
@@ -89,11 +83,7 @@ namespace PdfReporting.Logic
         {
             get
             {
-                return _footerHeight;
-            }
-            set
-            {
-                _footerHeight = value;
+                return GetHeightOfTemplate(_footerTemplateFilePath, _dataSourceObject);
             }
         }
 
@@ -160,31 +150,32 @@ namespace PdfReporting.Logic
             }
         }
 
-        public XpsHeaderAndFooterDefinition(String headerTemplateFilePath, String footerTemplateFilePath, String bodyTemplateFilePath, object dataSourceObject)
+        public XpsHeaderAndFooterDefinition(String headerTemplateFilePath, String footerTemplateFilePath, object dataSourceObject)
         {
             this._headerTemplateFilePath = headerTemplateFilePath;
             this._footerTemplateFilePath = footerTemplateFilePath;
-            this._bodyTemplateFilePath = bodyTemplateFilePath;
             this._dataSourceObject = dataSourceObject;
         }
 
-        private Visual GetVisualFromTemplate(string templateFilePath, object dataSourceObject)
+        private Visual GetVisualFromTemplate<T>(string templateFilePath, T dataSourceObject)
         {
             if (templateFilePath == null)
                 return null;
 
-            ManagedFlowDocument managedFlowDocument = GetFlowDocumentFromTemplate(templateFilePath);
-            managedFlowDocument.SetUpDataContext(dataSourceObject);
-            var visual = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator.GetPage(0).Visual;
-            //managedFlowDocument.RemoveLogicalChild(visual);
+            ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
+            managedFlowDocument = managedFlowDocument.InitializeFlowDocumentWith(templateFilePath, dataSourceObject);
+            var visual = managedFlowDocument.GetVisualOfPage(0);
             return visual;
         }
 
-        private ManagedFlowDocument GetFlowDocumentFromTemplate(string templateFilePath)
+        private Double GetHeightOfTemplate<T>(string templateFilePath, T dataSourceObject)
         {
+            if(templateFilePath == null)
+                return 0;
             ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
-            managedFlowDocument = managedFlowDocument.LoadFromTemplate(templateFilePath);
-            return managedFlowDocument;
+            managedFlowDocument.InitializeFlowDocumentWith(templateFilePath, dataSourceObject);
+            DocumentPage page =  managedFlowDocument.GetPage(0);
+            return page.Size.Height;
         }
 
         #endregion

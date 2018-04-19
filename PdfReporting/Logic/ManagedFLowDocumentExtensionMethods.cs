@@ -8,16 +8,17 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Markup;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace PdfReporting.Logic
 {
     public static class ManagedFLowDocumentExtensionMethods
     {
-        public static ManagedFlowDocument InitializeFlowDocumentReportWith<T>(this ManagedFlowDocument managedFlowDocument, string templateFilePath, T dataSourceObject)
+        public static ManagedFlowDocument InitializeFlowDocumentWith<T>(this ManagedFlowDocument managedFlowDocument, string templateFilePath, T dataSourceObject)
         {
             managedFlowDocument = GetFlowDocumentFrom(templateFilePath);
-            managedFlowDocument.SetUpDataContext(dataSourceObject);
+            managedFlowDocument.SetDataContextTo(dataSourceObject);
             return managedFlowDocument;
             
         }
@@ -69,7 +70,7 @@ namespace PdfReporting.Logic
             return new ParserContext { BaseUri = uri };
         }
 
-        public static void SetUpDataContext<T>(this ManagedFlowDocument managedFlowDocument, T dataSourceObject)
+        public static void SetDataContextTo<T>(this ManagedFlowDocument managedFlowDocument, T dataSourceObject)
         {
             managedFlowDocument.DataContext = dataSourceObject;
             RenderFLowDocumentWhenDataSourceIsLoaded(managedFlowDocument);
@@ -81,6 +82,23 @@ namespace PdfReporting.Logic
             {
                 return;
             }));
+        }
+
+        public static Visual GetVisualOfPage(this ManagedFlowDocument managedFlowDocument, int pageIndex)
+        {
+            DocumentPage page = managedFlowDocument.GetPage(pageIndex);
+            return page.Visual;
+        }
+
+        public static DocumentPage GetPage(this ManagedFlowDocument managedFlowDocument, int pageIndex)
+        {
+            DocumentPaginator paginator = managedFlowDocument.GetPaginator();
+            return paginator.GetPage(pageIndex);
+        }
+
+        public static DocumentPaginator GetPaginator(this ManagedFlowDocument managedFlowDocument)
+        {
+            return ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator;
         }
     }
 }
