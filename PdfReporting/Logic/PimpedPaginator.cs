@@ -20,33 +20,29 @@ namespace PdfReporting.Logic
 	/// </remarks>
 	public class PimpedPaginator : DocumentPaginator {
 
-        ContainerVisual _currentHeader = null;
-        private DocumentPaginator _paginator;
+        private ContainerVisual _currentHeader = null;
+        private DocumentPaginator _basePaginator;
+        private ManagedFlowDocument _baseFlowDocument;
         private XpsHeaderAndFooterDefinition _definition;
 
-        public override bool IsPageCountValid => _paginator.IsPageCountValid;
-        
-        public override int PageCount => _paginator.PageCount;
+        public override bool IsPageCountValid => _basePaginator.IsPageCountValid;
 
-        public override IDocumentPaginatorSource Source => _paginator.Source;
+        public override int PageCount => _basePaginator.PageCount;
 
         public override Size PageSize
         {
-            get{ return _paginator.PageSize; }
-            set{ _paginator.PageSize = value; }
+            get => _basePaginator.PageSize;
+            set => _basePaginator.PageSize = value;
         }
 
-        
+        public override IDocumentPaginatorSource Source => throw new NotImplementedException();
 
-
-        public PimpedPaginator(ManagedFlowDocument document, XpsHeaderAndFooterDefinition def)
+        public PimpedPaginator(ManagedFlowDocument document, XpsHeaderAndFooterDefinition definition)
         {
-            ManagedFlowDocument copy = document.GetCopy();
-			this._paginator = copy.GetPaginator();
-			this._definition = def;
-			_paginator.PageSize = new Size(_definition.ContentSize.Width, 500);
-            copy = this.SetDimensionsOf(copy);
-
+            this._baseFlowDocument = document.GetCopy();
+			this._basePaginator = _baseFlowDocument.GetPaginator();
+			this._definition = definition;
+            SetDimensionsOf(_baseFlowDocument);
         }
 
         private ManagedFlowDocument SetDimensionsOf(ManagedFlowDocument managedFlowDocument)
@@ -58,59 +54,16 @@ namespace PdfReporting.Logic
             return managedFlowDocument;
         }
 
-		public override DocumentPage GetPage(int pageNumber) {
-			// Use default paginator to handle pagination
-			Visual originalPage = _paginator.GetPage(pageNumber).Visual;
-
-			//Console.WriteLine("--- Begin Page {0} -------", pageNumber + 1);
-			//originalPage.DumpVisualTree(Console.Out); //die Methode existiert nicht
-			//Console.WriteLine("--- End Page {0} -------", pageNumber + 1);
-			//Console.WriteLine();
-
-			ContainerVisual pageVisual = new ContainerVisual();
-            ContainerVisual pageContentVisual = new ContainerVisual()
-            {
-                Transform = new TranslateTransform(
-                    0,
-                    _definition.HeaderHeight
-                )
-            };
-            pageContentVisual.Children.Add(originalPage);
-            pageVisual.Children.Add(pageContentVisual);
-
-            if (_definition.HeaderVisual != null)
-            {
-                ContainerVisual pageHeaderVisual = new ContainerVisual()
-                {
-                    Transform = new TranslateTransform(0, 0)
-                };
-                pageHeaderVisual.Children.Add(_definition.HeaderVisual);
-                pageVisual.Children.Add(pageHeaderVisual);
-            }
-
-            if (_definition.FooterVisual != null)
-            {
-                ContainerVisual pageFooterVisual = new ContainerVisual()
-                {
-                    Transform = new TranslateTransform(0, _definition.PageSize.Height - _definition.FooterHeight),
-                };
-                pageFooterVisual.Children.Add(_definition.FooterVisual);
-                pageVisual.Children.Add(pageFooterVisual);
-            }
-
-
-
-
-            //Create headers and footers
-
-
+		public override DocumentPage GetPage(int pageNumber)
+        {
+            EditablePage page = CreatePageWithContentFrom(pageNumber);
 
             //Check for repeating table headers
             if (_definition.RepeatTableHeaders)
             {
                 // Find table header
                 ContainerVisual table;
-                if (PageStartsWithTable(originalPage, out table) && _currentHeader != null)
+                if (PageStartsWithTable(originalPageVisual, out table) && _currentHeader != null)
                 {
                     // The page starts with a table and a table header was
                     // found on the previous page. Presumably this table 
@@ -138,7 +91,7 @@ namespace PdfReporting.Logic
                         _definition.ContentOrigin.X,
                         _definition.ContentOrigin.Y + headerBounds.Height
                     ));
-                    pageContentVisual.Transform = group;
+                    page.Transform = group;
 
                     ContainerVisual cp = VisualTreeHelper.GetParent(_currentHeader) as ContainerVisual;
                     if (cp != null)
@@ -146,13 +99,13 @@ namespace PdfReporting.Logic
                         cp.Children.Remove(_currentHeader);
                     }
                     tableHeaderVisual.Children.Add(_currentHeader);
-                    pageVisual.Children.Add(tableHeaderVisual);
+                    page.Children.Add(tableHeaderVisual);
                 }
 
                 // Check if there is a table on the bottom of the page.
                 // If it's there, its header should be repeated
                 ContainerVisual newTable, newHeader;
-                if (PageEndsWithTable(originalPage, out newTable, out newHeader))
+                if (PageEndsWithTable(originalPageVisual, out newTable, out newHeader))
                 {
                     if (newTable == table)
                     {
@@ -172,14 +125,28 @@ namespace PdfReporting.Logic
             }
 
             return new DocumentPage(
-				pageVisual, 
+				page, 
 				_definition.PageSize, 
 				new Rect(_definition.PageSize),
 				new Rect(_definition.ContentSize)
 			);
 		}
 
+        private EditablePage CreatePageWithContentFrom(int pageNumber)
+        {
+            EditablePage page = CreatePageWithHeaderFooter();
+            Visual originalPageVisual = _baseFlowDocument.GetVisualOfPage(pageNumber);
+            page.AddVisualAt(_definition.HeaderHeight, originalPageVisual);
+            return page;
+        }
 
+        private EditablePage CreatePageWithHeaderFooter()
+        {
+            EditablePage page = new EditablePage();
+            page.AddVisualAtTopOfPage(_definition.HeaderVisual);
+            page.AddVisualAt(_definition.FooterOffsetY, _definition.FooterVisual);
+            return page;
+        }
 
         /// <summary>
         /// Checks if the page ends with a table.

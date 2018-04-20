@@ -87,6 +87,11 @@ namespace PdfReporting.Logic
             }
         }
 
+        public double FooterOffsetY
+        {
+            get => PageSize.Height - FooterHeight;
+        }
+
         public double ContentHeight
         {
             get

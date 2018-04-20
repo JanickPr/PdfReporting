@@ -88,6 +88,7 @@
     <Compile Include="CustomControls\Helpers.cs" />
     <Compile Include="CustomControls\ItemsContent.cs" />
     <Compile Include="Logic\DocumentPaginatorWrapper.cs" />
+    <Compile Include="Logic\EditablePage.cs" />
     <Compile Include="Logic\GeneralExtensionMethods.cs" />
     <Compile Include="Logic\ManagedFlowDocument.cs" />
     <Compile Include="Logic\ManagedXpsDocument.cs" />
