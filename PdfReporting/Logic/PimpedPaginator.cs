@@ -20,123 +20,133 @@ namespace PdfReporting.Logic
 	/// </remarks>
 	public class PimpedPaginator : DocumentPaginator {
 
-        ContainerVisual currentHeader = null;
-        private DocumentPaginator paginator;
-        private XpsHeaderAndFooterDefinition definition;
+        ContainerVisual _currentHeader = null;
+        private DocumentPaginator _paginator;
+        private XpsHeaderAndFooterDefinition _definition;
 
-        public override bool IsPageCountValid => paginator.IsPageCountValid;
+        public override bool IsPageCountValid => _paginator.IsPageCountValid;
         
-        public override int PageCount => paginator.PageCount;
+        public override int PageCount => _paginator.PageCount;
 
-        public override IDocumentPaginatorSource Source => paginator.Source;
+        public override IDocumentPaginatorSource Source => _paginator.Source;
 
         public override Size PageSize
         {
-            get{ return paginator.PageSize; }
-            set{ paginator.PageSize = value; }
+            get{ return _paginator.PageSize; }
+            set{ _paginator.PageSize = value; }
         }
 
         
 
 
-        public PimpedPaginator(FlowDocument document, XpsHeaderAndFooterDefinition def) {
-            // Create a copy of the flow document,
-            // so we can modify it without modifying
-            // the original.
-            DocumentPaginator paginator = ((IDocumentPaginatorSource)document).DocumentPaginator;
-			MemoryStream stream = new MemoryStream();
-			TextRange sourceDocument = new TextRange(document.ContentStart, document.ContentEnd);
-			sourceDocument.Save(stream, DataFormats.Xaml);
-			ManagedFlowDocument copy = new ManagedFlowDocument();
-			TextRange copyDocumentRange = new TextRange(copy.ContentStart, copy.ContentEnd);
-			copyDocumentRange.Load(stream, DataFormats.Xaml);
-			this.paginator = ((IDocumentPaginatorSource)copy).DocumentPaginator;
-			this.definition = def;
-			paginator.PageSize = def.ContentSize;
+        public PimpedPaginator(ManagedFlowDocument document, XpsHeaderAndFooterDefinition def)
+        {
+            ManagedFlowDocument copy = document.GetCopy();
+			this._paginator = copy.GetPaginator();
+			this._definition = def;
+			_paginator.PageSize = new Size(_definition.ContentSize.Width, 500);
+            copy = this.SetDimensionsOf(copy);
 
-			// Change page size of the document to
-			// the size of the content area
-			copy.ColumnWidth = double.MaxValue; // Prevent columns
-			copy.PageWidth = definition.ContentSize.Width;
-			copy.PageHeight = definition.ContentSize.Height;
-			copy.PagePadding = new Thickness(0);
-		}
+        }
+
+        private ManagedFlowDocument SetDimensionsOf(ManagedFlowDocument managedFlowDocument)
+        {
+            managedFlowDocument.ColumnWidth = double.MaxValue; // Prevent columns
+            managedFlowDocument.PageWidth = _definition.ContentSize.Width;
+            managedFlowDocument.PageHeight = _definition.ContentHeight;
+            managedFlowDocument.PagePadding = new Thickness(0);
+            return managedFlowDocument;
+        }
 
 		public override DocumentPage GetPage(int pageNumber) {
 			// Use default paginator to handle pagination
-			Visual originalPage = paginator.GetPage(pageNumber).Visual;
+			Visual originalPage = _paginator.GetPage(pageNumber).Visual;
 
 			//Console.WriteLine("--- Begin Page {0} -------", pageNumber + 1);
 			//originalPage.DumpVisualTree(Console.Out); //die Methode existiert nicht
 			//Console.WriteLine("--- End Page {0} -------", pageNumber + 1);
 			//Console.WriteLine();
 
-			ContainerVisual visual = new ContainerVisual();
-            ContainerVisual pageVisual = new ContainerVisual()
+			ContainerVisual pageVisual = new ContainerVisual();
+            ContainerVisual pageContentVisual = new ContainerVisual()
             {
                 Transform = new TranslateTransform(
                     0,
-                    100
+                    _definition.HeaderHeight
                 )
-
             };
-            pageVisual.Children.Add(originalPage);
-                        
-            visual.Children.Add(pageVisual);
+            pageContentVisual.Children.Add(originalPage);
+            pageVisual.Children.Add(pageContentVisual);
+
+            if (_definition.HeaderVisual != null)
+            {
+                ContainerVisual pageHeaderVisual = new ContainerVisual()
+                {
+                    Transform = new TranslateTransform(0, 0)
+                };
+                pageHeaderVisual.Children.Add(_definition.HeaderVisual);
+                pageVisual.Children.Add(pageHeaderVisual);
+            }
+
+            if (_definition.FooterVisual != null)
+            {
+                ContainerVisual pageFooterVisual = new ContainerVisual()
+                {
+                    Transform = new TranslateTransform(0, _definition.PageSize.Height - _definition.FooterHeight),
+                };
+                pageFooterVisual.Children.Add(_definition.FooterVisual);
+                pageVisual.Children.Add(pageFooterVisual);
+            }
+
+
+
 
             //Create headers and footers
 
-            if (definition.HeaderVisual != null)
-            {
-                visual.Children.Add(definition.HeaderVisual);
-            }
-            if (definition.FooterVisual != null)
-            {
-                visual.Children.Add(definition.FooterVisual);
-            }
+
 
             //Check for repeating table headers
-            if (definition.RepeatTableHeaders)
+            if (_definition.RepeatTableHeaders)
             {
-                    // Find table header
-                    ContainerVisual table;
-                if (PageStartsWithTable(originalPage, out table) && currentHeader != null)
+                // Find table header
+                ContainerVisual table;
+                if (PageStartsWithTable(originalPage, out table) && _currentHeader != null)
                 {
                     // The page starts with a table and a table header was
                     // found on the previous page. Presumably this table 
                     // was started on the previous page, so we'll repeat the
                     // table header.
-                    Rect headerBounds = VisualTreeHelper.GetDescendantBounds(currentHeader);
-                    Vector offset = VisualTreeHelper.GetOffset(currentHeader);
+                    Rect headerBounds = VisualTreeHelper.GetDescendantBounds(_currentHeader);
+                    Vector offset = VisualTreeHelper.GetOffset(_currentHeader);
                     ContainerVisual tableHeaderVisual = new ContainerVisual();
 
                     // Translate the header to be at the top of the page
                     // instead of its previous position
                     tableHeaderVisual.Transform = new TranslateTransform(
-                        definition.ContentOrigin.X,
-                        definition.ContentOrigin.Y - headerBounds.Top
+                        _definition.ContentOrigin.X,
+                        _definition.ContentOrigin.Y - headerBounds.Top
                     );
 
                     // Since we've placed the repeated table header on top of the
                     // content area, we'll need to scale down the rest of the content
                     // to accomodate this. Since the table header is relatively small,
                     // this probably is barely noticeable.
-                    double yScale = (definition.ContentSize.Height - headerBounds.Height) / definition.ContentSize.Height;
+                    double yScale = (_definition.ContentSize.Height - headerBounds.Height) / _definition.ContentSize.Height;
                     TransformGroup group = new TransformGroup();
                     group.Children.Add(new ScaleTransform(1.0, yScale));
                     group.Children.Add(new TranslateTransform(
-                        definition.ContentOrigin.X,
-                        definition.ContentOrigin.Y + headerBounds.Height
+                        _definition.ContentOrigin.X,
+                        _definition.ContentOrigin.Y + headerBounds.Height
                     ));
-                    pageVisual.Transform = group;
+                    pageContentVisual.Transform = group;
 
-                    ContainerVisual cp = VisualTreeHelper.GetParent(currentHeader) as ContainerVisual;
+                    ContainerVisual cp = VisualTreeHelper.GetParent(_currentHeader) as ContainerVisual;
                     if (cp != null)
                     {
-                        cp.Children.Remove(currentHeader);
+                        cp.Children.Remove(_currentHeader);
                     }
-                    tableHeaderVisual.Children.Add(currentHeader);
-                    visual.Children.Add(tableHeaderVisual);
+                    tableHeaderVisual.Children.Add(_currentHeader);
+                    pageVisual.Children.Add(tableHeaderVisual);
                 }
 
                 // Check if there is a table on the bottom of the page.
@@ -151,21 +161,21 @@ namespace PdfReporting.Logic
                     else
                     {
                         // We've found a new table. Repeat the header on the next page
-                        currentHeader = newHeader;
+                        _currentHeader = newHeader;
                     }
                 }
                 else
                 {
                     // There was no table at the end of the page
-                    currentHeader = null;
+                    _currentHeader = null;
                 }
             }
 
             return new DocumentPage(
-				visual, 
-				definition.PageSize, 
-				new Rect(definition.PageSize),
-				new Rect(definition.ContentSize)
+				pageVisual, 
+				_definition.PageSize, 
+				new Rect(_definition.PageSize),
+				new Rect(_definition.ContentSize)
 			);
 		}
 

@@ -20,7 +20,7 @@ namespace PdfReporting.Logic
 
         public Uri PackageUri { get; set; }
 
-        public ManagedXpsDocument(Uri packageUri, Package package, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition) : base(package, CompressionOption.NotCompressed, packageUri.ToString())
+        public ManagedXpsDocument(Uri packageUri, Package package, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition) : base(package, CompressionOption.SuperFast, packageUri.ToString())
         {
             PackageUri = packageUri;
             RegisterAtPackageStoreWith(package, packageUri);

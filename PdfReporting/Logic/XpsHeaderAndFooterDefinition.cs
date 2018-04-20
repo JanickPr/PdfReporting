@@ -87,6 +87,14 @@ namespace PdfReporting.Logic
             }
         }
 
+        public double ContentHeight
+        {
+            get
+            {
+                return PageSize.Height - FooterHeight - HeaderHeight;
+            }
+        }
+
         #endregion
 
         ///<summary>
@@ -161,19 +169,26 @@ namespace PdfReporting.Logic
         {
             if (templateFilePath == null)
                 return null;
-
-            ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
-            managedFlowDocument = managedFlowDocument.InitializeFlowDocumentWith(templateFilePath, dataSourceObject);
+            
+            ManagedFlowDocument managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(templateFilePath, dataSourceObject);
+            managedFlowDocument = managedFlowDocument.GetCopy();
+            SetDimensonsFor(ref managedFlowDocument);
             var visual = managedFlowDocument.GetVisualOfPage(0);
             return visual;
+        }
+
+        private void SetDimensonsFor(ref ManagedFlowDocument managedFlowDocument)
+        {
+            managedFlowDocument.ColumnWidth = double.MaxValue; // Prevent columns
+            managedFlowDocument.PageWidth = this.ContentSize.Width;
         }
 
         private Double GetHeightOfTemplate<T>(string templateFilePath, T dataSourceObject)
         {
             if(templateFilePath == null)
                 return 0;
-            ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
-            managedFlowDocument.InitializeFlowDocumentWith(templateFilePath, dataSourceObject);
+
+            ManagedFlowDocument managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(templateFilePath, dataSourceObject);
             DocumentPage page =  managedFlowDocument.GetPage(0);
             return page.Size.Height;
         }

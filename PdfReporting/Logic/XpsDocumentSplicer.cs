@@ -28,9 +28,8 @@ namespace PdfReporting.Logic
 
         public void AddXpsDocumentWith<T>(T dataSourceObject)
         {
-            ManagedFlowDocument managedFlowDocument = new ManagedFlowDocument();
             string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
-            managedFlowDocument = managedFlowDocument.InitializeFlowDocumentWith(bodyTemplateFilePath, dataSourceObject);
+            ManagedFlowDocument managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(bodyTemplateFilePath, dataSourceObject);
             this.AddXpsDocumentWithContentFrom(managedFlowDocument);
         }
 
