@@ -19,16 +19,16 @@ namespace PdfReporting.Logic
     /// </summary>
     public class XpsDocumentSplicer : List<ManagedXpsDocument>
     {
-        string _templateFolderPath;
+        private ReportProperties _reportProperties;
 
-        public XpsDocumentSplicer(string templateFolderPath)
+        public XpsDocumentSplicer(ReportProperties reportProperties)
         {
-            _templateFolderPath = templateFolderPath;
+            _reportProperties = reportProperties;
         }
 
         public void AddXpsDocumentWith<T>(T dataSourceObject)
         {
-            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
+            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
             ManagedFlowDocument managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(bodyTemplateFilePath, dataSourceObject);
             this.AddXpsDocumentWithContentFrom(managedFlowDocument);
         }
@@ -62,9 +62,9 @@ namespace PdfReporting.Logic
 
         private XpsHeaderAndFooterDefinition GetXpsHeaderAndFooterDefinitionWith(object dataContext)
         {
-            string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(_templateFolderPath);
-            string footerTemplateFilePath = GetFooterTemplateFilePathFrom(_templateFolderPath);
-            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_templateFolderPath);
+            string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
+            string footerTemplateFilePath = GetFooterTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
+            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
             return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext);
         }
 
@@ -104,7 +104,7 @@ namespace PdfReporting.Logic
         {
             Uri packageUri = GetNewIndexedPackageUri();
             Package package = GetNewPackageAt(packageUri);
-            return new ManagedXpsDocument(packageUri, package, xpsHeaderAndFooterDefinition);
+            return new ManagedXpsDocument(packageUri, package, xpsHeaderAndFooterDefinition, _reportProperties);
         }
 
         private Uri GetNewIndexedPackageUri()

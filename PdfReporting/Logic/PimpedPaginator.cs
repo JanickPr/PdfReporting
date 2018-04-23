@@ -24,6 +24,8 @@ namespace PdfReporting.Logic
         private DocumentPaginator _basePaginator;
         private ManagedFlowDocument _baseFlowDocument;
         private XpsHeaderAndFooterDefinition _definition;
+        private ReportProperties _reportProperties;
+        private int _pageCounter = 0;
 
         public override bool IsPageCountValid => _basePaginator.IsPageCountValid;
 
@@ -35,13 +37,14 @@ namespace PdfReporting.Logic
             set => _basePaginator.PageSize = value;
         }
 
-        public override IDocumentPaginatorSource Source => throw new NotImplementedException();
+        public override IDocumentPaginatorSource Source => _basePaginator.Source;
 
-        public PimpedPaginator(ManagedFlowDocument document, XpsHeaderAndFooterDefinition definition)
+        public PimpedPaginator(ManagedFlowDocument document, XpsHeaderAndFooterDefinition definition, ReportProperties reportProperties)
         {
             this._baseFlowDocument = document.GetCopy();
 			this._basePaginator = _baseFlowDocument.GetPaginator();
 			this._definition = definition;
+            this._reportProperties = reportProperties;
             SetDimensionsOf(_baseFlowDocument);
         }
 
@@ -57,73 +60,7 @@ namespace PdfReporting.Logic
 		public override DocumentPage GetPage(int pageNumber)
         {
             EditablePage page = CreatePageWithContentFrom(pageNumber);
-
-            //Check for repeating table headers
-            if (_definition.RepeatTableHeaders)
-            {
-                // Find table header
-                ContainerVisual table;
-                if (PageStartsWithTable(originalPageVisual, out table) && _currentHeader != null)
-                {
-                    // The page starts with a table and a table header was
-                    // found on the previous page. Presumably this table 
-                    // was started on the previous page, so we'll repeat the
-                    // table header.
-                    Rect headerBounds = VisualTreeHelper.GetDescendantBounds(_currentHeader);
-                    Vector offset = VisualTreeHelper.GetOffset(_currentHeader);
-                    ContainerVisual tableHeaderVisual = new ContainerVisual();
-
-                    // Translate the header to be at the top of the page
-                    // instead of its previous position
-                    tableHeaderVisual.Transform = new TranslateTransform(
-                        _definition.ContentOrigin.X,
-                        _definition.ContentOrigin.Y - headerBounds.Top
-                    );
-
-                    // Since we've placed the repeated table header on top of the
-                    // content area, we'll need to scale down the rest of the content
-                    // to accomodate this. Since the table header is relatively small,
-                    // this probably is barely noticeable.
-                    double yScale = (_definition.ContentSize.Height - headerBounds.Height) / _definition.ContentSize.Height;
-                    TransformGroup group = new TransformGroup();
-                    group.Children.Add(new ScaleTransform(1.0, yScale));
-                    group.Children.Add(new TranslateTransform(
-                        _definition.ContentOrigin.X,
-                        _definition.ContentOrigin.Y + headerBounds.Height
-                    ));
-                    page.Transform = group;
-
-                    ContainerVisual cp = VisualTreeHelper.GetParent(_currentHeader) as ContainerVisual;
-                    if (cp != null)
-                    {
-                        cp.Children.Remove(_currentHeader);
-                    }
-                    tableHeaderVisual.Children.Add(_currentHeader);
-                    page.Children.Add(tableHeaderVisual);
-                }
-
-                // Check if there is a table on the bottom of the page.
-                // If it's there, its header should be repeated
-                ContainerVisual newTable, newHeader;
-                if (PageEndsWithTable(originalPageVisual, out newTable, out newHeader))
-                {
-                    if (newTable == table)
-                    {
-                        // Still the same table so don't change the repeating header
-                    }
-                    else
-                    {
-                        // We've found a new table. Repeat the header on the next page
-                        _currentHeader = newHeader;
-                    }
-                }
-                else
-                {
-                    // There was no table at the end of the page
-                    _currentHeader = null;
-                }
-            }
-
+            _pageCounter++;
             return new DocumentPage(
 				page, 
 				_definition.PageSize, 
@@ -137,6 +74,7 @@ namespace PdfReporting.Logic
             EditablePage page = CreatePageWithHeaderFooter();
             Visual originalPageVisual = _baseFlowDocument.GetVisualOfPage(pageNumber);
             page.AddVisualAt(_definition.HeaderHeight, originalPageVisual);
+            page = AddPageCounterToPage(page, pageNumber);
             return page;
         }
 
@@ -148,77 +86,13 @@ namespace PdfReporting.Logic
             return page;
         }
 
-        /// <summary>
-        /// Checks if the page ends with a table.
-        /// </summary>
-        /// <remarks>
-        /// There is no such thing as a 'TableVisual'. There is a RowVisual, which
-        /// is contained in a ParagraphVisual if it's part of a table. For our
-        /// purposes, we'll consider this the table Visual
-        /// 
-        /// You'd think that if the last element on the page was a table row, 
-        /// this would also be the last element in the visual tree, but this is not true
-        /// The page ends with a ContainerVisual which is aparrently  empty.
-        /// Therefore, this method will only check the last child of an element
-        /// unless this is a ContainerVisual
-        /// </remarks>
-        /// <param name="originalPage"></param>
-        /// <returns></returns>
-        private bool PageEndsWithTable(DependencyObject element, out ContainerVisual tableVisual, out ContainerVisual headerVisual) {
-			tableVisual = null;
-			headerVisual = null;
-			if(element.GetType().Name == "RowVisual") {
-				tableVisual = (ContainerVisual)VisualTreeHelper.GetParent(element);
-				headerVisual = (ContainerVisual)VisualTreeHelper.GetChild(tableVisual, 0);
-				return true;
-			}
-			int children = VisualTreeHelper.GetChildrenCount(element);
-			if(element.GetType() == typeof(ContainerVisual)) {
-				for(int c = children - 1; c >= 0; c--) {
-					DependencyObject child = VisualTreeHelper.GetChild(element, c);
-					if(PageEndsWithTable(child, out tableVisual, out headerVisual)) {
-						return true;
-					}
-				}
-			} else if(children > 0) {
-				DependencyObject child = VisualTreeHelper.GetChild(element, children - 1);
-				if(PageEndsWithTable(child, out tableVisual, out headerVisual)) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-
-		/// <summary>
-		/// Checks if the page starts with a table which presumably has wrapped
-		/// from the previous page.
-		/// </summary>
-		/// <param name="element"></param>
-		/// <param name="tableVisual"></param>
-		/// <param name="headerVisual"></param>
-		/// <returns></returns>
-		private bool PageStartsWithTable(DependencyObject element, out ContainerVisual tableVisual) {
-			tableVisual = null;
-			if(element.GetType().Name == "RowVisual") {
-				tableVisual = (ContainerVisual)VisualTreeHelper.GetParent(element);
-				return true;
-			}
-			if(VisualTreeHelper.GetChildrenCount(element)> 0) {
-				DependencyObject child = VisualTreeHelper.GetChild(element, 0);
-				if(PageStartsWithTable(child, out tableVisual)) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-
-		#region DocumentPaginator members
-
-		
-
-		#endregion
-
+        private EditablePage AddPageCounterToPage(EditablePage editablePage, int pageNumber)
+        {
+            if (_reportProperties.PageNumberSettings.OverallNumeration)
+                editablePage.AddPageNumber(_pageCounter, default, _reportProperties.PageNumberSettings);
+            else
+                editablePage.AddPageNumber(pageNumber, _basePaginator.PageCount, _reportProperties.PageNumberSettings);
+            return editablePage;
+        }
 	}
 }

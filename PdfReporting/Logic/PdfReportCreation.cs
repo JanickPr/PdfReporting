@@ -1,22 +1,9 @@
-﻿using MigraDoc.Rendering;
-using PdfSharp.Pdf;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Interop;
-using System.Windows.Markup;
-using System.Windows.Media;
-using System.Windows.Threading;
-using System.Windows.Xps;
-using System.Windows.Xps.Packaging;
-using System.Windows.Xps.Serialization;
 
 namespace PdfReporting.Logic
 {
@@ -32,37 +19,40 @@ namespace PdfReporting.Logic
 
         #region Methods
 
-        public static async Task CreatePdfReportFromObjectAsync<T>(string templateFolderPath, T dataSourceObject, string outputDirectory, 
-                                                                   CancellationToken token = default, IProgress<int> progress = null)
-            => await CreatePdfReportFromObjectListAsync(templateFolderPath, new List<T> { dataSourceObject }, outputDirectory, token, progress);
+        public static async Task CreatePdfReportFromObjectAsync<T>(ReportProperties reportProperties, T dataSourceObject, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
+        {
+            await CreatePdfReportFromObjectListAsync(reportProperties, new List<T> { dataSourceObject }, token, progress);
+        }
 
-        public static Task CreatePdfReportFromObjectListAsync<T>(string templateFolderPath, IEnumerable<T> dataSourceList, string outputDirectory,
-                                                                       CancellationToken token = default, IProgress<int> progress = null)
+        public static Task CreatePdfReportFromObjectListAsync<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
         {
             var taskCompletionSource = new TaskCompletionSource<object>();
             var thread = new Thread(() =>
             {
-                CreatePdfReportFromObjectList(templateFolderPath, dataSourceList, outputDirectory, token, progress);
+                CreatePdfReportFromObjectList(reportProperties, dataSourceObjectList, token, progress);
             });
-
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
             return taskCompletionSource.Task;
-        }
+        }    
 
-        public static void CreatePdfReportFromObjectList<T>(string templateFolderPath, IEnumerable<T> dataSourceList, string outputDirectory,
-                                                                       CancellationToken token = default, IProgress<int> progress = null)
+        private static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
         {
-            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer(templateFolderPath);
-            foreach (var dataSourceItem in dataSourceList)
+            if (dataSourceObjectList == null)
+            {
+                throw new ArgumentNullException(nameof(dataSourceObjectList));
+            }
+
+            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer(reportProperties);
+            foreach (var dataSourceItem in dataSourceObjectList)
             {
                 if (progress != null)
-                    progress.Report(GetProcessingProgress(dataSourceItem, dataSourceList));
+                    progress.Report(GetProcessingProgress(dataSourceItem, dataSourceObjectList));
                 if (token.IsCancellationRequested)
                     return;
                 xpsDocumentSplicer.AddXpsDocumentWith(dataSourceItem);
             }
-            SaveAsPdf(xpsDocumentSplicer, outputDirectory);
+            SaveAsPdf(xpsDocumentSplicer, reportProperties.OutputDirectory);
         }
 
         private static int GetProcessingProgress<T>(T dataSourceItem, IEnumerable<T> dataSourceList)
