@@ -9,14 +9,6 @@ namespace PdfReporting.Logic
 {
     public static class PdfReportCreation
     {
-        #region Fields
-
-        private static double standartPageHeight = 1123.2;
-        private static double standartPageWidth = 796.8;
-        private static double maxPageHeight;
-
-        #endregion
-
         #region Methods
 
         public static async Task CreatePdfReportFromObjectAsync<T>(ReportProperties reportProperties, T dataSourceObject, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
@@ -39,9 +31,7 @@ namespace PdfReporting.Logic
         private static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
         {
             if (dataSourceObjectList == null)
-            {
                 throw new ArgumentNullException(nameof(dataSourceObjectList));
-            }
 
             XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer(reportProperties);
             foreach (var dataSourceItem in dataSourceObjectList)

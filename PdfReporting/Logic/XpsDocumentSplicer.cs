@@ -92,7 +92,6 @@ namespace PdfReporting.Logic
             {
                 return null;
             }
-                
         }
 
         private static List<string> getAllFileNamesFrom(string templateFolderPath)
@@ -122,6 +121,7 @@ namespace PdfReporting.Logic
         {
             FixedDocumentSequence fixedDocumentSequence = GetSplicedFixedDocumentSequence();
             SaveXpsDocumentWithFixedDocumentSequenceTo(outputDirectory, fixedDocumentSequence);
+            fixedDocumentSequence = null;
         }
 
         private FixedDocumentSequence GetSplicedFixedDocumentSequence()
@@ -175,9 +175,7 @@ namespace PdfReporting.Logic
                 newDoc.Pages.Add(newPage);
             }
 
-            // The order in which you do this is REALLY important
             newSequence.References.Add(newDocReference);
-
             return newSequence;
         }
 
