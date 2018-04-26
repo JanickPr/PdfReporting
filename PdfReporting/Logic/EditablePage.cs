@@ -57,7 +57,7 @@ namespace PdfReporting.Logic
 
         private FormattedText GetPageNumberTextEnhanced(PageNumberSettings pageNumberSettings, int pageNumber, int totalPages)
         {
-            return new FormattedText(pageNumberSettings.PagePrefix + " " + (pageNumber + 1) + " von " + totalPages,
+            return new FormattedText(pageNumberSettings.PagePrefix + " " + (pageNumber) + " von " + totalPages,
                    System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                    pageNumberSettings.FontFamily, pageNumberSettings.FontSize, pageNumberSettings.FontBrush);
         }

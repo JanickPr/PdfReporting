@@ -48,7 +48,7 @@ namespace PdfReporting.Logic
         public void CreateContentFromFlowDocument(ManagedFlowDocument managedFlowDocument)
         {
             XpsSerializationManager xpsSerializationManager = GetXpsSerializationManager();
-            DocumentPaginator documentPaginator = GetDocumentPaginatorFrom(managedFlowDocument);
+            PimpedPaginator documentPaginator = GetDocumentPaginatorFrom(managedFlowDocument);  
             xpsSerializationManager.SaveAsXaml(documentPaginator);
         }
 
@@ -57,10 +57,8 @@ namespace PdfReporting.Logic
             return new XpsSerializationManager(new XpsPackagingPolicy(this), false);
         }
 
-        private DocumentPaginator GetDocumentPaginatorFrom(ManagedFlowDocument managedFlowDocument)
+        private PimpedPaginator GetDocumentPaginatorFrom(ManagedFlowDocument managedFlowDocument)
         {
-            //DocumentPaginator paginator = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator;
-            //paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default, _xpsHeaderAndFooterDefinition);
             return new PimpedPaginator(managedFlowDocument, this._xpsHeaderAndFooterDefinition, this._reportProperties);
         }
 
