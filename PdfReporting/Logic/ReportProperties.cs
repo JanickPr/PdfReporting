@@ -26,9 +26,9 @@ namespace PdfReporting.Logic
 
         public ReportProperties(string templateFolderPath, PageNumberSettings pageNumberSettings, string outputDirectory)
         {
-            TemplateFolderPath = templateFolderPath;
-            PageNumberSettings = pageNumberSettings;
-            OutputDirectory = outputDirectory;
+            this.TemplateFolderPath = templateFolderPath;
+            this.PageNumberSettings = pageNumberSettings;
+            this.OutputDirectory = outputDirectory;
         }
     }
 }

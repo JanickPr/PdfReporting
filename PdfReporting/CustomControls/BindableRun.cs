@@ -19,10 +19,10 @@ namespace WpfPdfReporting.CustomControls
             ((Run)d).Text = (string)e.NewValue;
         }
 
-        public String BoundText
+        public string BoundText
         {
-            get { return (string)GetValue(BoundTextProperty); }
-            set { SetValue(BoundTextProperty, value); }
+            get => (string)GetValue(BoundTextProperty);
+            set => SetValue(BoundTextProperty, value);
         }
     }
 }

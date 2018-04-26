@@ -16,18 +16,18 @@ namespace PdfReporting.Logic
 {
     public class ManagedXpsDocument : XpsDocument
     {
-        private XpsHeaderAndFooterDefinition _xpsHeaderAndFooterDefinition;
-        private ReportProperties _reportProperties;
+        private readonly XpsHeaderAndFooterDefinition _xpsHeaderAndFooterDefinition;
+        private readonly ReportProperties _reportProperties;
 
         public Uri PackageUri { get; set; }
 
-        public ManagedXpsDocument(Uri packageUri, Package package, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition, ReportProperties reportProperties) 
+        public ManagedXpsDocument(Uri packageUri, Package package, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition, ReportProperties reportProperties)
             : base(package, CompressionOption.SuperFast, packageUri.ToString())
         {
-            PackageUri = packageUri;
+            this.PackageUri = packageUri;
             RegisterAtPackageStoreWith(package, packageUri);
-            _xpsHeaderAndFooterDefinition = xpsHeaderAndFooterDefinition;
-            _reportProperties = reportProperties;
+            this._xpsHeaderAndFooterDefinition = xpsHeaderAndFooterDefinition;
+            this._reportProperties = reportProperties;
         }
 
         private void RegisterAtPackageStoreWith(Package package, Uri packageUri)
@@ -61,24 +61,13 @@ namespace PdfReporting.Logic
         {
             //DocumentPaginator paginator = ((IDocumentPaginatorSource)managedFlowDocument).DocumentPaginator;
             //paginator = new DocumentPaginatorWrapper(paginator, new Size(796.8, 1123.2), default, _xpsHeaderAndFooterDefinition);
-            var paginator = new PimpedPaginator(managedFlowDocument, _xpsHeaderAndFooterDefinition, _reportProperties);
-            return paginator;
+            return new PimpedPaginator(managedFlowDocument, this._xpsHeaderAndFooterDefinition, this._reportProperties);
         }
 
         public new FixedDocumentSequence GetFixedDocumentSequence()
         {
             FixedDocumentSequence fixedDocumentSequence = base.GetFixedDocumentSequence();
             return fixedDocumentSequence ?? new FixedDocumentSequence();
-        }
-
-        private List<DocumentReference> GetDocumentReferencesFrom(XpsDocument xpsDocument)
-        {
-            return xpsDocument.GetFixedDocumentSequence().References.ToList();
-        }
-
-        private XpsDocumentWriter GetXpsDocumentWriterFor(XpsDocument xpsDocument)
-        {
-            return XpsDocument.CreateXpsDocumentWriter(xpsDocument);
         }
 
         private void UnregisterFromPackagestore(Uri packageUri)

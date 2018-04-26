@@ -14,35 +14,35 @@ namespace WpfPdfReporting.CustomControls
         public ItemsContent()
         {
             Helpers.FixupDataContext(this);
-            Loaded += ItemsContent_Loaded;
+            Loaded += this.ItemsContent_Loaded;
         }
 
         private void ItemsContent_Loaded(object sender, RoutedEventArgs e)
         {
-            GenerateContent(ItemsPanel, ItemTemplate, ItemsSource);
+            GenerateContent(this.ItemsPanel, this.ItemTemplate, this.ItemsSource);
         }
 
         public IEnumerable ItemsSource
         {
-            get { return (IEnumerable)GetValue(ItemsSourceProperty); }
-            set { SetValue(ItemsSourceProperty, value); }
+            get => (IEnumerable)GetValue(ItemsSourceProperty);
+            set => SetValue(ItemsSourceProperty, value);
         }
 
         public DataTemplate ItemTemplate
         {
-            get { return (DataTemplate)GetValue(ItemTemplateProperty); }
-            set { SetValue(ItemTemplateProperty, value); }
+            get => (DataTemplate)GetValue(ItemTemplateProperty);
+            set => SetValue(ItemTemplateProperty, value);
         }
 
         public DataTemplate ItemsPanel
         {
-            get { return (DataTemplate)GetValue(ItemsPanelProperty); }
-            set { SetValue(ItemsPanelProperty, value); }
+            get => (DataTemplate)GetValue(ItemsPanelProperty);
+            set => SetValue(ItemsPanelProperty, value);
         }
 
         private void GenerateContent(DataTemplate itemsPanel, DataTemplate itemTemplate, IEnumerable itemsSource)
         {
-            Blocks.Clear();
+            this.Blocks.Clear();
             if (itemTemplate != null && itemsSource != null)
             {
                 FrameworkContentElement panel = null;
@@ -58,7 +58,7 @@ namespace WpfPdfReporting.CustomControls
                             FrameworkContentElement p = Helpers.LoadDataTemplate(itemsPanel);
                             if (!(p is Block))
                                 throw new Exception("ItemsPanel must be a block element");
-                            Blocks.Add((Block)p);
+                            this.Blocks.Add((Block)p);
                             panel = Attached.GetItemsHost(p);
                             if (panel == null)
                                 throw new Exception("ItemsHost not found. Did you forget to specify Attached.IsItemsHost?");
@@ -77,27 +77,22 @@ namespace WpfPdfReporting.CustomControls
             }
         }
 
-        private void GenerateContent()
-        {
-            GenerateContent(ItemsPanel, ItemTemplate, ItemsSource);
-        }
-
         private void OnItemsSourceChanged(IEnumerable newValue)
         {
             //if (IsLoaded)
-            GenerateContent(ItemsPanel, ItemTemplate, newValue);
+            GenerateContent(this.ItemsPanel, this.ItemTemplate, newValue);
         }
 
         private void OnItemTemplateChanged(DataTemplate newValue)
         {
             //if (IsLoaded)
-            GenerateContent(ItemsPanel, newValue, ItemsSource);
+            GenerateContent(this.ItemsPanel, newValue, this.ItemsSource);
         }
 
         private void OnItemsPanelChanged(DataTemplate newValue)
         {
             //if (IsLoaded)
-            GenerateContent(newValue, ItemTemplate, ItemsSource);
+            GenerateContent(newValue, this.ItemTemplate, this.ItemsSource);
         }
 
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

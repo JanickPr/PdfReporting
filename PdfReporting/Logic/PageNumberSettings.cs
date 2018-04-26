@@ -45,18 +45,15 @@ namespace PdfReporting.Logic
             get; set;
         }
 
-
-
         public PageNumberSettings(Point position, Typeface fontFamily, int fontSize, Brush fontBrush, bool overallNumeration, string pagePrefix, bool pageOfAllPagesNotation)
         {
-            Position = position;
-            FontFamily = fontFamily;
-            FontSize = fontSize;
-            FontBrush = fontBrush;
-            OverallNumeration = overallNumeration;
-            PagePrefix = pagePrefix;
-            PageOfAllPagesNotation = pageOfAllPagesNotation;
+            this.Position = position;
+            this.FontFamily = fontFamily;
+            this.FontSize = fontSize;
+            this.FontBrush = fontBrush;
+            this.OverallNumeration = overallNumeration;
+            this.PagePrefix = pagePrefix;
+            this.PageOfAllPagesNotation = pageOfAllPagesNotation;
         }
-
     }
 }

@@ -22,12 +22,13 @@ namespace WpfPdfReporting.CustomControls
         /// <param name="element"></param>
         public static void FixupDataContext(FrameworkContentElement element)
         {
-            Binding b = new Binding(FrameworkContentElement.DataContextProperty.Name);
-            // another approach (if this one has problems) is to bind to an ancestor by ElementName
-            b.RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(FrameworkElement), 1);
+            var b = new Binding(FrameworkContentElement.DataContextProperty.Name)
+            {
+                // another approach (if this one has problems) is to bind to an ancestor by ElementName
+                RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(FrameworkElement), 1)
+            };
             element.SetBinding(FrameworkContentElement.DataContextProperty, b);
         }
-
 
         private static bool InternalUnFixupDataContext(DependencyObject dp)
         {
@@ -51,13 +52,11 @@ namespace WpfPdfReporting.CustomControls
             return false;
         }
 
-
         public static void UnFixupDataContext(DependencyObject dp)
         {
             while (InternalUnFixupDataContext(dp))
                 ;
         }
-
 
         /// <summary>
         /// Convert "data" to a flow document block object. If data is already a block, the return value is data recast.
@@ -73,7 +72,7 @@ namespace WpfPdfReporting.CustomControls
                 return new Paragraph((Inline)data);
             else if (data is BindingBase)
             {
-                BindableRun run = new BindableRun();
+                var run = new BindableRun();
                 if (dataContext is BindingBase)
                     run.SetBinding(BindableRun.DataContextProperty, (BindingBase)dataContext);
                 else
@@ -83,12 +82,13 @@ namespace WpfPdfReporting.CustomControls
             }
             else
             {
-                Run run = new Run();
-                run.Text = (data == null) ? String.Empty : data.ToString();
+                var run = new Run
+                {
+                    Text = (data == null) ? String.Empty : data.ToString()
+                };
                 return new Paragraph(run);
             }
         }
-
 
         public static FrameworkContentElement LoadDataTemplate(DataTemplate dataTemplate)
         {
@@ -102,7 +102,7 @@ namespace WpfPdfReporting.CustomControls
                     return inlines.FirstInline;
                 else
                 {
-                    Paragraph paragraph = new Paragraph();
+                    var paragraph = new Paragraph();
                     // we can't use an enumerator, since adding an inline removes it from its collection
                     while (inlines.FirstInline != null)
                         paragraph.Inlines.Add(inlines.FirstInline);

@@ -10,14 +10,8 @@ namespace WpfPdfReporting.CustomControls
 
         public FrameworkContentElement Content
         {
-            get
-            {
-                return (FrameworkContentElement)GetValue(ContentProperty);
-            }
-            set
-            {
-                SetValue(ContentProperty, value);
-            }
+            get => (FrameworkContentElement)GetValue(ContentProperty);
+            set => SetValue(ContentProperty, value);
         }
     }
 }

@@ -13,12 +13,10 @@ namespace WpfPdfReporting.CustomControls
             return (bool)target.GetValue(IsItemsHostProperty);
         }
 
-
         public static void SetIsItemsHost(DependencyObject target, bool value)
         {
             target.SetValue(IsItemsHostProperty, value);
         }
-
 
         private static void SetItemsHost(FrameworkContentElement element)
         {
@@ -27,7 +25,6 @@ namespace WpfPdfReporting.CustomControls
                 parent = (FrameworkContentElement)parent.Parent;
             parent.SetValue(ItemsHostProperty, element);
         }
-
 
         public static FrameworkContentElement GetItemsHost(DependencyObject dp)
         {
@@ -38,7 +35,7 @@ namespace WpfPdfReporting.CustomControls
         {
             if ((bool)e.NewValue)
             {
-                FrameworkContentElement element = (FrameworkContentElement)d;
+                var element = (FrameworkContentElement)d;
                 if (element.IsInitialized)
                     SetItemsHost(element);
                 else
@@ -48,7 +45,7 @@ namespace WpfPdfReporting.CustomControls
 
         private static void ItemsHost_Initialized(object sender, EventArgs e)
         {
-            FrameworkContentElement element = (FrameworkContentElement)sender;
+            var element = (FrameworkContentElement)sender;
             element.Initialized -= ItemsHost_Initialized;
             SetItemsHost(element);
         }

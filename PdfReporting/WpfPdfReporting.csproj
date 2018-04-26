@@ -59,7 +59,7 @@
       <HintPath>..\packages\PDFsharp-MigraDoc-GDI.1.32.4334.0\lib\net20\PdfSharp.Charting.dll</HintPath>
     </Reference>
     <Reference Include="PdfSharp.Xps">
-      <HintPath>..\..\..\..\PdfSharpXpsBin\PdfSharp.Xps.dll</HintPath>
+      <HintPath>\\zahnaerzte-wl.ads\KZVWL\Users\a00011\Downloads\PdfSharpXpsBin\PdfSharp.Xps.dll</HintPath>
     </Reference>
     <Reference Include="ReachFramework" />
     <Reference Include="System" />
@@ -87,7 +87,6 @@
     <Compile Include="CustomControls\Fragment.cs" />
     <Compile Include="CustomControls\Helpers.cs" />
     <Compile Include="CustomControls\ItemsContent.cs" />
-    <Compile Include="Logic\DocumentPaginatorWrapper.cs" />
     <Compile Include="Logic\EditablePage.cs" />
     <Compile Include="Logic\GeneralExtensionMethods.cs" />
     <Compile Include="Logic\ManagedFlowDocument.cs" />

@@ -11,34 +11,30 @@ namespace PdfReporting.Logic
     {
         #region Methods
 
-        public static async Task CreatePdfReportFromObjectAsync<T>(ReportProperties reportProperties, T dataSourceObject, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
+        public static async Task CreatePdfReportFromObjectAsync<T>(ReportProperties reportProperties, T dataSourceObject, CancellationToken token = default, IProgress<int> progress = null)
         {
-            await CreatePdfReportFromObjectListAsync(reportProperties, new List<T> { dataSourceObject }, token, progress);
+            await CreatePdfReportFromObjectListAsync(reportProperties, new List<T> { dataSourceObject }, token, progress).ConfigureAwait(false);
         }
 
-        public static Task CreatePdfReportFromObjectListAsync<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
+        public static Task CreatePdfReportFromObjectListAsync<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default, IProgress<int> progress = null)
         {
             var taskCompletionSource = new TaskCompletionSource<object>();
-            var thread = new Thread(() =>
-            {
-                CreatePdfReportFromObjectList(reportProperties, dataSourceObjectList, token, progress);
-            });
+            var thread = new Thread(() => CreatePdfReportFromObjectList(reportProperties, dataSourceObjectList, token, progress));
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
             return taskCompletionSource.Task;
-        }    
+        }
 
-        private static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default(CancellationToken), IProgress<int> progress = null)
+        private static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default, IProgress<int> progress = null)
         {
-            if (dataSourceObjectList == null)
+            if(dataSourceObjectList == null)
                 throw new ArgumentNullException(nameof(dataSourceObjectList));
 
-            XpsDocumentSplicer xpsDocumentSplicer = new XpsDocumentSplicer(reportProperties);
-            foreach (var dataSourceItem in dataSourceObjectList)
+            var xpsDocumentSplicer = new XpsDocumentSplicer(reportProperties);
+            foreach(T dataSourceItem in dataSourceObjectList)
             {
-                if (progress != null)
-                    progress.Report(GetProcessingProgress(dataSourceItem, dataSourceObjectList));
-                if (token.IsCancellationRequested)
+                progress?.Report(GetProcessingProgress(dataSourceItem, dataSourceObjectList));
+                if(token.IsCancellationRequested)
                     return;
                 xpsDocumentSplicer.AddXpsDocumentWith(dataSourceItem);
             }
@@ -47,7 +43,7 @@ namespace PdfReporting.Logic
 
         private static int GetProcessingProgress<T>(T dataSourceItem, IEnumerable<T> dataSourceList)
         {
-            List<T> tempList = dataSourceList.ToList();
+            var tempList = dataSourceList.ToList();
             int index = tempList.IndexOf(dataSourceItem);
             return (index / dataSourceList.Count()) * 100;
         }
@@ -67,13 +63,12 @@ namespace PdfReporting.Logic
 
         private static void ConvertXpsToPdf(string xpsFileName, string outputDirectory)
         {
-            using (PdfSharp.Xps.XpsModel.XpsDocument pdfXpsDoc = PdfSharp.Xps.XpsModel.XpsDocument.Open(xpsFileName))
+            using(var pdfXpsDoc = PdfSharp.Xps.XpsModel.XpsDocument.Open(xpsFileName))
             {
                 PdfSharp.Xps.XpsConverter.Convert(pdfXpsDoc, outputDirectory, 0);
             }
         }
 
-        
         #endregion
     }
 }

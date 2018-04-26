@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Xps;
 using System.Windows.Xps.Packaging;
-using System.Windows.Xps.Serialization;
 
 namespace PdfReporting.Logic
 {
@@ -19,17 +16,17 @@ namespace PdfReporting.Logic
     /// </summary>
     public class XpsDocumentSplicer : List<ManagedXpsDocument>
     {
-        private ReportProperties _reportProperties;
+        private readonly ReportProperties _reportProperties;
 
         public XpsDocumentSplicer(ReportProperties reportProperties)
         {
-            _reportProperties = reportProperties;
+            this._reportProperties = reportProperties;
         }
 
         public void AddXpsDocumentWith<T>(T dataSourceObject)
         {
-            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
-            ManagedFlowDocument managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(bodyTemplateFilePath, dataSourceObject);
+            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
+            var managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(bodyTemplateFilePath, dataSourceObject);
             this.AddXpsDocumentWithContentFrom(managedFlowDocument);
         }
 
@@ -37,10 +34,10 @@ namespace PdfReporting.Logic
         {
             try
             {
-                List<string> folderContent = getAllFileNamesFrom(templateFolderPath);
+                List<string> folderContent = GetAllFileNamesFrom(templateFolderPath);
                 return folderContent.First(fileName => fileName.EndsWith("BodyTemplate.xaml"));
             }
-            catch (Exception)
+            catch(Exception)
             {
                 throw new NullReferenceException("The folder does not contain any file ending with 'BodyTemplate.xaml'.");
             }
@@ -62,9 +59,9 @@ namespace PdfReporting.Logic
 
         private XpsHeaderAndFooterDefinition GetXpsHeaderAndFooterDefinitionWith(object dataContext)
         {
-            string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
-            string footerTemplateFilePath = GetFooterTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
-            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(_reportProperties.TemplateFolderPath);
+            string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
+            string footerTemplateFilePath = GetFooterTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
+            string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
             return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext);
         }
 
@@ -72,10 +69,10 @@ namespace PdfReporting.Logic
         {
             try
             {
-                List<string> folderContent = getAllFileNamesFrom(templateFolderPath);
+                List<string> folderContent = GetAllFileNamesFrom(templateFolderPath);
                 return folderContent.First(fileName => fileName.EndsWith("HeaderTemplate.xaml"));
             }
-            catch (InvalidOperationException)
+            catch(InvalidOperationException)
             {
                 return null;
             }
@@ -85,16 +82,16 @@ namespace PdfReporting.Logic
         {
             try
             {
-                List<string> folderContent = getAllFileNamesFrom(templateFolderPath);
+                List<string> folderContent = GetAllFileNamesFrom(templateFolderPath);
                 return folderContent.First(fileName => fileName.EndsWith("FooterTemplate.xaml"));
             }
-            catch (InvalidOperationException)
+            catch(InvalidOperationException)
             {
                 return null;
             }
         }
 
-        private static List<string> getAllFileNamesFrom(string templateFolderPath)
+        private static List<string> GetAllFileNamesFrom(string templateFolderPath)
         {
             return Directory.GetFiles(templateFolderPath).ToList();
         }
@@ -103,21 +100,22 @@ namespace PdfReporting.Logic
         {
             Uri packageUri = GetNewIndexedPackageUri();
             Package package = GetNewPackageAt(packageUri);
-            return new ManagedXpsDocument(packageUri, package, xpsHeaderAndFooterDefinition, _reportProperties);
+            return new ManagedXpsDocument(packageUri, package, xpsHeaderAndFooterDefinition, this._reportProperties);
         }
 
         private Uri GetNewIndexedPackageUri()
         {
-            return new Uri($@"pack://temp{this.Count + 1}.xps");
+            return new Uri($"pack://temp{this.Count + 1}.xps");
         }
 
         private Package GetNewPackageAt(Uri packageUri)
         {
-            Package package = PackageHelper.OpenPackageInMemoryStream();
-            return package;
+            if(packageUri == null)
+                throw new ArgumentNullException(nameof(packageUri));
+            return PackageHelper.OpenPackageInMemoryStream();
         }
 
-        public void SaveSplicedXpsDocumentTo(String outputDirectory)
+        public void SaveSplicedXpsDocumentTo(string outputDirectory)
         {
             FixedDocumentSequence fixedDocumentSequence = GetSplicedFixedDocumentSequence();
             SaveXpsDocumentWithFixedDocumentSequenceTo(outputDirectory, fixedDocumentSequence);
@@ -127,13 +125,12 @@ namespace PdfReporting.Logic
         private FixedDocumentSequence GetSplicedFixedDocumentSequence()
         {
             List<PageContent> pages = this.GetAllPages();
-            FixedDocumentSequence fixedDocumentSequence = CreateManagedXpsDocumentFromPages(pages);
-            return fixedDocumentSequence;
+            return CreateManagedXpsDocumentFromPages(pages);
         }
 
         private List<PageContent> GetAllPages()
         {
-            List<PageContent> pages = new List<PageContent>();
+            var pages = new List<PageContent>();
             List<FixedDocument> fixedDocuments = GetAllFixedDocuments();
             fixedDocuments.ForEach(fixedDocument => pages.AddRange(fixedDocument.Pages));
             return pages;
@@ -141,9 +138,9 @@ namespace PdfReporting.Logic
 
         private List<FixedDocument> GetAllFixedDocuments()
         {
-            List<FixedDocument> allFixedDocuments = new List<FixedDocument>();
+            var allFixedDocuments = new List<FixedDocument>();
 
-            foreach (var xpsDocument in this)
+            foreach(ManagedXpsDocument xpsDocument in this)
             {
                 IEnumerable<FixedDocument> fixedDocumentsOfXpsDocument = GetFixedDocumentsFrom(xpsDocument);
                 allFixedDocuments.AddRange(fixedDocumentsOfXpsDocument);
@@ -155,22 +152,23 @@ namespace PdfReporting.Logic
         private IEnumerable<FixedDocument> GetFixedDocumentsFrom(ManagedXpsDocument xpsDocument)
         {
             FixedDocumentSequence fixedDocumentSequence = xpsDocument.GetFixedDocumentSequence();
-            IEnumerable<FixedDocument> fixedDocuments = fixedDocumentSequence.References.Select(r => r.GetDocument(true));
-            return fixedDocuments;
+            return fixedDocumentSequence.References.Select(r => r.GetDocument(true));
         }
 
         private FixedDocumentSequence CreateManagedXpsDocumentFromPages(IEnumerable<PageContent> pages)
         {
-            FixedDocumentSequence newSequence = new FixedDocumentSequence();
-            DocumentReference newDocReference = new DocumentReference();
-            FixedDocument newDoc = new FixedDocument();
+            var newSequence = new FixedDocumentSequence();
+            var newDocReference = new DocumentReference();
+            var newDoc = new FixedDocument();
             newDocReference.SetDocument(newDoc);
 
-            foreach (PageContent page in pages)
+            foreach(PageContent page in pages)
             {
-                PageContent newPage = new PageContent();
-                newPage.Source = page.Source;   
-                (newPage as IUriContext).BaseUri = ((IUriContext)page).BaseUri;
+                var newPage = new PageContent
+                {
+                    Source = page.Source
+                };
+                (newPage as IUriContext).BaseUri = (page as IUriContext)?.BaseUri;
                 newPage.GetPageRoot(true);
                 newDoc.Pages.Add(newPage);
             }
@@ -182,7 +180,7 @@ namespace PdfReporting.Logic
         private void SaveXpsDocumentWithFixedDocumentSequenceTo(string outputDirectory, FixedDocumentSequence fixedDocumentSequence)
         {
             File.Delete(outputDirectory);
-            using (XpsDocument xpsDocument = new XpsDocument(outputDirectory, FileAccess.ReadWrite))
+            using(var xpsDocument = new XpsDocument(outputDirectory, FileAccess.ReadWrite))
             {
                 XpsDocumentWriter xpsDocumentWriter = GetXpsDocumentWriterFor(xpsDocument);
                 xpsDocumentWriter.Write(fixedDocumentSequence);

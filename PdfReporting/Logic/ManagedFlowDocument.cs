@@ -24,14 +24,12 @@ namespace PdfReporting.Logic
             ManagedFlowDocument managedFlowDocument = GetFlowDocumentFrom(templateFilePath);
             managedFlowDocument.SetDataContextTo(dataSourceObject);
             return managedFlowDocument;
-
         }
 
         public static ManagedFlowDocument GetFlowDocumentFrom(string templateFilePath)
         {
             FileInfo templateFile = GetFileInfoFor(templateFilePath);
-            ManagedFlowDocument managedFlowDocument = CreateManagedFlowDocumentFrom(templateFile);
-            return managedFlowDocument;
+            return CreateManagedFlowDocumentFrom(templateFile);
         }
 
         private static FileStream GetFileStreamFor(FileInfo file)
@@ -50,8 +48,7 @@ namespace PdfReporting.Logic
             using (FileStream fileStream = GetFileStreamFor(templateFile))
             {
                 ParserContext parserContext = GetParserContextFor(templateFile);
-                ManagedFlowDocument managedFlowDocument = LoadManagedFlowDocumentFrom(fileStream, parserContext);
-                return managedFlowDocument;
+                return LoadManagedFlowDocumentFrom(fileStream, parserContext);
             }
         }
 
@@ -63,9 +60,7 @@ namespace PdfReporting.Logic
         private static ParserContext GetParserContextFor(FileInfo file)
         {
             Uri uri = GetAbsoluteUriForFile(file);
-            ParserContext parser = GetParserContextWithBaseUri(uri);
-
-            return parser;
+            return GetParserContextWithBaseUri(uri);
         }
 
         private static Uri GetAbsoluteUriForFile(FileInfo file)
@@ -107,22 +102,21 @@ namespace PdfReporting.Logic
         public ManagedFlowDocument GetCopy()
         {
             MemoryStream stream = this.SaveToMemoryStream();
-            ManagedFlowDocument copy = GetManagedFlowDocumentFrom(stream);
-            return copy;
+            return GetManagedFlowDocumentFrom(stream);
         }
 
         private MemoryStream SaveToMemoryStream()
         {
-            MemoryStream stream = new MemoryStream();
-            TextRange textRange = new TextRange(this.ContentStart, this.ContentEnd);
+            var stream = new MemoryStream();
+            var textRange = new TextRange(this.ContentStart, this.ContentEnd);
             textRange.Save(stream, DataFormats.Xaml);
             return stream;
         }
 
         private static ManagedFlowDocument GetManagedFlowDocumentFrom(MemoryStream stream)
         {
-            ManagedFlowDocument copy = new ManagedFlowDocument();
-            TextRange copyDocumentRange = new TextRange(copy.ContentStart, copy.ContentEnd);
+            var copy = new ManagedFlowDocument();
+            var copyDocumentRange = new TextRange(copy.ContentStart, copy.ContentEnd);
             copyDocumentRange.Load(stream, DataFormats.Xaml);
             return copy;
         }

@@ -9,37 +9,28 @@ namespace WpfPdfReporting.CustomControls
 
         public DataTemplate Template
         {
-            get
-            {
-                return (DataTemplate)GetValue(TemplateProperty);
-            }
-            set
-            {
-                SetValue(TemplateProperty, value);
-            }
+            get => (DataTemplate)GetValue(TemplateProperty);
+            set => SetValue(TemplateProperty, value);
         }
-
 
         public BlockTemplateContent()
         {
             Helpers.FixupDataContext(this);
-            Loaded += BlockTemplateContent_Loaded;
+            Loaded += this.BlockTemplateContent_Loaded;
         }
-
 
         private void BlockTemplateContent_Loaded(object sender, RoutedEventArgs e)
         {
-            GenerateContent(Template);
+            GenerateContent(this.Template);
         }
-
 
         private void GenerateContent(DataTemplate template)
         {
-            Blocks.Clear();
+            this.Blocks.Clear();
             if (template != null)
             {
                 FrameworkContentElement element = Helpers.LoadDataTemplate(template);
-                Blocks.Add((Block)element);
+                this.Blocks.Add((Block)element);
             }
         }
 
@@ -47,7 +38,6 @@ namespace WpfPdfReporting.CustomControls
         {
             GenerateContent(dataTemplate);
         }
-
 
         private static void OnTemplateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
