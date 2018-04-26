@@ -23,7 +23,7 @@ namespace PdfReporting.Logic
         /// <summary>
         /// PageSize in DIUs
         /// </summary>
-        public Size PageSize { get; set; } = new Size(8.5 * 96.0, 11.0 * 96.0);
+        public Size PageSize { get; set; } = new Size(793.5987, 1122.3987);
 
         /// <summary>
         /// Space reserved for the header in DIUs
