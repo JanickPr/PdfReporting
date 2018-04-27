@@ -17,6 +17,7 @@ namespace PdfReporting.Logic
         private readonly ReportContentDefinition _definition;
         private readonly ReportProperties _reportProperties;
         private readonly List<EditablePage> _pages = new List<EditablePage>();
+        private int _pageCount = -1;
         public static int GlobalPageCounter;
 
         public override bool IsPageCountValid
@@ -26,7 +27,12 @@ namespace PdfReporting.Logic
 
         public override int PageCount
         {
-            get => this.GetPageCount();
+            get
+            {
+                if(this._pageCount == -1)
+                    this._pageCount = GetPageCount();
+                return this._pageCount;
+            }
         }
 
         public override Size PageSize

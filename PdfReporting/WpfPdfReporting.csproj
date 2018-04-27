@@ -62,6 +62,9 @@
       <HintPath>\\zahnaerzte-wl.ads\KZVWL\Users\a00011\Downloads\PdfSharpXpsBin\PdfSharp.Xps.dll</HintPath>
     </Reference>
     <Reference Include="ReachFramework" />
+    <Reference Include="SmartThreadPool">
+      <HintPath>\\zahnaerzte-wl.ads\kzvwl\Users\a00011\Eigene Dateien\Visual Studio 2017\Projects\smartthreadpool_2.2.3\bin\Windows\SmartThreadPool.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -90,6 +93,7 @@
     <Compile Include="Logic\EditablePage.cs" />
     <Compile Include="Logic\GeneralExtensionMethods.cs" />
     <Compile Include="Logic\ManagedFlowDocument.cs" />
+    <Compile Include="Logic\ManagedThreadPool.cs" />
     <Compile Include="Logic\ManagedXpsDocument.cs" />
     <Compile Include="Logic\Orientation.cs" />
     <Compile Include="Logic\PackageHelper.cs" />
