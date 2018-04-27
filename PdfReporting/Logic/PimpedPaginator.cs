@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -22,12 +23,12 @@ namespace PdfReporting.Logic
 
         public override bool IsPageCountValid
         {
-            get => this._isPageCountValid;
+            get => this._pages.Count == this.PageCount;
         }
 
         public override int PageCount
         {
-            get => this._pages.Count;
+            get => this.GetPageCount();
         }
 
         public override Size PageSize
@@ -55,7 +56,7 @@ namespace PdfReporting.Logic
             PageCounter++;
 
             EditablePage page;
-            if(pageNumber < _pages.Count)
+            if(pageNumber < this._pages.Count)
                 page = _pages[pageNumber];
             else
                 page = CreatePageWithContentFrom(pageNumber);
@@ -74,28 +75,31 @@ namespace PdfReporting.Logic
             this._pages.Add(page);
             page.AddVisualAt(this._definition.HeaderHeight, originalPageVisual);
             page.AddFooterAndHeader(this._definition);
-            if(this._baseFlowDocument.GetVisualOfPage(pageNumber + 1) == null)
-            {
-                this._isPageCountValid = true;
-                this.AddPageNumbers();
-            }
 
+            this.AddPageNumber(pageNumber);
             return page;
         }
 
-        public void AddPageNumbers()
+        private int GetPageCount()
         {
-            for(int i = 0; i < this.PageCount; i++)
+            int i = 0;
+            while(this._baseFlowDocument.GetVisualOfPage(i) != null)
             {
-                EditablePage page = _pages[i];
-                if(this._reportProperties.PageNumberSettings.OverallNumeration)
-                {
-                    page.AddPageNumber(PageCounter, 0, this._reportProperties.PageNumberSettings);
-                }
-                else
-                {
-                    page.AddPageNumber(i + 1, this.PageCount, this._reportProperties.PageNumberSettings);
-                }
+                i++;
+            }
+            return i;
+        }
+
+        public void AddPageNumber(int pageNumber)
+        {
+            EditablePage page = _pages[pageNumber];
+            if(this._reportProperties.PageNumberSettings.OverallNumeration)
+            {
+                page.AddPageNumber(PageCounter, 0, this._reportProperties.PageNumberSettings);
+            }
+            else
+            {
+                page.AddPageNumber(pageNumber + 1, this.PageCount, this._reportProperties.PageNumberSettings);
             }
         }
     }

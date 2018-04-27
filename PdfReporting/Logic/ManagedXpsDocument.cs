@@ -48,7 +48,7 @@ namespace PdfReporting.Logic
         public void CreateContentFromFlowDocument(ManagedFlowDocument managedFlowDocument)
         {
             XpsSerializationManager xpsSerializationManager = GetXpsSerializationManager();
-            PimpedPaginator documentPaginator = GetDocumentPaginatorFrom(managedFlowDocument);  
+            PimpedPaginator documentPaginator = GetDocumentPaginatorFrom(managedFlowDocument);
             xpsSerializationManager.SaveAsXaml(documentPaginator);
         }
 

@@ -22,7 +22,7 @@ namespace PdfReporting.Logic
         public string OutputDirectory
         {
             get; set;
-        } 
+        }
 
         public ReportProperties(string templateFolderPath, PageNumberSettings pageNumberSettings, string outputDirectory)
         {
