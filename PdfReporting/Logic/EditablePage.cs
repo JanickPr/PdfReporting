@@ -5,7 +5,7 @@ namespace PdfReporting.Logic
 {
     public class EditablePage : ContainerVisual
     {
-        public void AddFooterAndHeader(XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition)
+        public void AddFooterAndHeader(ReportContentDefinition xpsHeaderAndFooterDefinition)
         {
             this.AddVisualAtTopOfPage(xpsHeaderAndFooterDefinition.HeaderVisual);
             this.AddVisualAt(xpsHeaderAndFooterDefinition.FooterOffsetY, xpsHeaderAndFooterDefinition.FooterVisual);

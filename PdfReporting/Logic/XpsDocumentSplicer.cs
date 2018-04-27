@@ -51,18 +51,18 @@ namespace PdfReporting.Logic
 
         private ManagedXpsDocument CreateManagedXpsDocumentFrom(ManagedFlowDocument managedFlowDocument)
         {
-            XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition = GetXpsHeaderAndFooterDefinitionWith(managedFlowDocument.DataContext);
+            ReportContentDefinition xpsHeaderAndFooterDefinition = GetXpsHeaderAndFooterDefinitionWith(managedFlowDocument.DataContext);
             ManagedXpsDocument managedXpsDocument = GetNewManagedXpsDocument(xpsHeaderAndFooterDefinition);
             managedXpsDocument.CreateContentFromFlowDocument(managedFlowDocument);
             return managedXpsDocument;
         }
 
-        private XpsHeaderAndFooterDefinition GetXpsHeaderAndFooterDefinitionWith(object dataContext)
+        private ReportContentDefinition GetXpsHeaderAndFooterDefinitionWith(object dataContext)
         {
             string headerTemplateFilePath = GetHeaderTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
             string footerTemplateFilePath = GetFooterTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
             string bodyTemplateFilePath = GetBodyTemplateFilePathFrom(this._reportProperties.TemplateFolderPath);
-            return new XpsHeaderAndFooterDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext);
+            return new ReportContentDefinition(headerTemplateFilePath, footerTemplateFilePath, dataContext, this._reportProperties);
         }
 
         private string GetHeaderTemplateFilePathFrom(string templateFolderPath)
@@ -96,7 +96,7 @@ namespace PdfReporting.Logic
             return Directory.GetFiles(templateFolderPath).ToList();
         }
 
-        private ManagedXpsDocument GetNewManagedXpsDocument(XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition)
+        private ManagedXpsDocument GetNewManagedXpsDocument(ReportContentDefinition xpsHeaderAndFooterDefinition)
         {
             Uri packageUri = GetNewIndexedPackageUri();
             Package package = GetNewPackageAt(packageUri);

@@ -16,12 +16,12 @@ namespace PdfReporting.Logic
 {
     public class ManagedXpsDocument : XpsDocument
     {
-        private readonly XpsHeaderAndFooterDefinition _xpsHeaderAndFooterDefinition;
+        private readonly ReportContentDefinition _xpsHeaderAndFooterDefinition;
         private readonly ReportProperties _reportProperties;
 
         public Uri PackageUri { get; set; }
 
-        public ManagedXpsDocument(Uri packageUri, Package package, XpsHeaderAndFooterDefinition xpsHeaderAndFooterDefinition, ReportProperties reportProperties)
+        public ManagedXpsDocument(Uri packageUri, Package package, ReportContentDefinition xpsHeaderAndFooterDefinition, ReportProperties reportProperties)
             : base(package, CompressionOption.SuperFast, packageUri.ToString())
         {
             this.PackageUri = packageUri;

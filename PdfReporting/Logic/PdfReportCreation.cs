@@ -39,7 +39,7 @@ namespace PdfReporting.Logic
                 xpsDocumentSplicer.AddXpsDocumentWith(dataSourceItem);
             }
             SaveAsPdf(xpsDocumentSplicer, reportProperties.OutputDirectory);
-            PimpedPaginator.PageCounter = 0;
+            PimpedPaginator.GlobalPageCounter = 0;
         }
 
         private static int GetProcessingProgress<T>(T dataSourceItem, IEnumerable<T> dataSourceList)

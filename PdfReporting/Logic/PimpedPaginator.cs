@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -15,11 +14,10 @@ namespace PdfReporting.Logic
     {
         private readonly DocumentPaginator _basePaginator;
         private readonly ManagedFlowDocument _baseFlowDocument;
-        private readonly XpsHeaderAndFooterDefinition _definition;
+        private readonly ReportContentDefinition _definition;
         private readonly ReportProperties _reportProperties;
         private readonly List<EditablePage> _pages = new List<EditablePage>();
-        private bool _isPageCountValid;
-        public static int PageCounter;
+        public static int GlobalPageCounter;
 
         public override bool IsPageCountValid
         {
@@ -42,7 +40,7 @@ namespace PdfReporting.Logic
             get => this._basePaginator.Source;
         }
 
-        public PimpedPaginator(ManagedFlowDocument document, XpsHeaderAndFooterDefinition definition, ReportProperties reportProperties)
+        public PimpedPaginator(ManagedFlowDocument document, ReportContentDefinition definition, ReportProperties reportProperties)
         {
             this._baseFlowDocument = document.GetCopy();
             this._basePaginator = this._baseFlowDocument.GetPaginator();
@@ -53,11 +51,11 @@ namespace PdfReporting.Logic
 
         public override DocumentPage GetPage(int pageNumber)
         {
-            PageCounter++;
+            GlobalPageCounter++;
 
             EditablePage page;
             if(pageNumber < this._pages.Count)
-                page = _pages[pageNumber];
+                page = this._pages[pageNumber];
             else
                 page = CreatePageWithContentFrom(pageNumber);
             return new DocumentPage(
@@ -92,10 +90,10 @@ namespace PdfReporting.Logic
 
         public void AddPageNumber(int pageNumber)
         {
-            EditablePage page = _pages[pageNumber];
+            EditablePage page = this._pages[pageNumber];
             if(this._reportProperties.PageNumberSettings.OverallNumeration)
             {
-                page.AddPageNumber(PageCounter, 0, this._reportProperties.PageNumberSettings);
+                page.AddPageNumber(GlobalPageCounter, 0, this._reportProperties.PageNumberSettings);
             }
             else
             {

@@ -4,11 +4,12 @@ using System.Windows.Media;
 
 namespace PdfReporting.Logic
 {
-    public class XpsHeaderAndFooterDefinition
+    public class ReportContentDefinition
     {
         private readonly string _headerTemplateFilePath;
         private readonly string _footerTemplateFilePath;
         private readonly object _dataSourceObject;
+        private readonly ReportProperties _reportProperties;
 
         public Visual HeaderVisual
         {
@@ -23,7 +24,10 @@ namespace PdfReporting.Logic
         /// <summary>
         /// PageSize in DIUs
         /// </summary>
-        public Size PageSize { get; set; } = new Size(793.5987, 1122.3987);
+        public Size PageSize
+        {
+            get => _reportProperties.ReportOrientation == Orientation.Vertical ? new Size(793.5987, 1122.3987) : new Size(1122.3987, 793.5987);
+        }
 
         /// <summary>
         /// Space reserved for the header in DIUs
@@ -61,11 +65,12 @@ namespace PdfReporting.Logic
             }
         }
 
-        public XpsHeaderAndFooterDefinition(string headerTemplateFilePath, string footerTemplateFilePath, object dataSourceObject)
+        public ReportContentDefinition(string headerTemplateFilePath, string footerTemplateFilePath, object dataSourceObject, ReportProperties reportProperties)
         {
             this._headerTemplateFilePath = headerTemplateFilePath;
             this._footerTemplateFilePath = footerTemplateFilePath;
             this._dataSourceObject = dataSourceObject;
+            this._reportProperties = reportProperties;
         }
 
         private Visual GetVisualFromTemplate<T>(string templateFilePath, T dataSourceObject)

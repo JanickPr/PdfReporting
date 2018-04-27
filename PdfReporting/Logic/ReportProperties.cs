@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PdfReporting.Logic
+﻿namespace PdfReporting.Logic
 {
     public class ReportProperties
     {
@@ -24,11 +17,17 @@ namespace PdfReporting.Logic
             get; set;
         }
 
-        public ReportProperties(string templateFolderPath, PageNumberSettings pageNumberSettings, string outputDirectory)
+        public Orientation ReportOrientation
+        {
+            get; set;
+        }
+
+        public ReportProperties(string templateFolderPath, PageNumberSettings pageNumberSettings, string outputDirectory, Orientation reportOrientation)
         {
             this.TemplateFolderPath = templateFolderPath;
             this.PageNumberSettings = pageNumberSettings;
             this.OutputDirectory = outputDirectory;
+            this.ReportOrientation = reportOrientation;
         }
     }
 }
