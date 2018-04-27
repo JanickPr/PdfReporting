@@ -3,7 +3,7 @@ using System.Windows;
 
 namespace WpfPdfReporting.CustomControls
 {
-    public class Attached
+    public static class Attached
     {
         private static readonly DependencyProperty IsItemsHostProperty = DependencyProperty.RegisterAttached("IsItemsHost", typeof(bool), typeof(Attached), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.NotDataBindable, OnIsItemsHostChanged));
         private static readonly DependencyProperty ItemsHostProperty = DependencyProperty.RegisterAttached("ItemsHost", typeof(FrameworkContentElement), typeof(Attached), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.NotDataBindable));
