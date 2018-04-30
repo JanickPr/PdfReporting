@@ -21,9 +21,11 @@ namespace PdfReporting.Logic
             return new ManagedThreadPool(sTPStartInfo);
         }
 
-        public void FillWith<T>(Action<T> method, IEnumerable<T> parameterList)
+        public void FillWith<T>(Amib.Threading.Action method, IEnumerable<T> parameterList)
         {
-            parameterList.ToList().ForEach(parameter => this.QueueWorkItem(method, parameter));
+            var workItemList = new List<Amib.Threading.Action>();
+            
+            this.Join(workItemList);
         }
     }
 }

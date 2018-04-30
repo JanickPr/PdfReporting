@@ -26,7 +26,7 @@ namespace PdfReporting.Logic
             var taskCompletionSource = new TaskCompletionSource<object>();
             var thread = new Thread(() => CreatePdfReportFromObjectList(reportProperties, dataSourceObjectList, token, progress));
             thread.SetApartmentState(ApartmentState.STA);
-            thread.Start(); 
+            thread.Start();
             return taskCompletionSource.Task;
         }
 
@@ -41,21 +41,53 @@ namespace PdfReporting.Logic
             Fill(ref xpsDocumentSplicer, dataSourceObjectList);
             CheckForCancellation();
 
-                
-            
             SaveAsPdf(xpsDocumentSplicer, reportProperties.OutputDirectory);
             FinishProgress();
         }
 
         private static void Fill<T>(ref XpsDocumentSplicer xpsDocumentSplicer, IEnumerable<T> dataSourceObjectList)
         {
-            //ManagedThreadPool managedThreadPool = ManagedThreadPool.GetStaThreadPool();
-            //managedThreadPool.FillWith(xpsDocumentSplicer.AddXpsDocumentWith, dataSourceObjectList);
-            //managedThreadPool.Start();
-            //ManagedThreadPool.WaitAll(new IWaitableResult[] { });
-            //List<Thread> threadList = GetSTAThreadListFor(xpsDocumentSplicer.AddXpsDocumentWith, dataSourceObjectList);
-            //Execute(threadList);
-            //Await(threadList);
+            //foreach(T sourceObject in dataSourceObjectList)
+            //{
+            //    xpsDocumentSplicer.AddXpsDocumentWith(sourceObject);
+            //}
+            //var managedThreadPool = ManagedThreadPool.GetStaThreadPool();
+            //managedThreadPool.FillWith(xpsDocumentSplicer.AddXpsDocumentWith, dataSourceObjectList);  
+            List<Task> taskList = GetTaskListFor(xpsDocumentSplicer.AddXpsDocumentWith, dataSourceObjectList);
+            Task.WaitAll(taskList.ToArray());
+            //Execute(taskList);
+            //Await(taskList);
+        }
+
+        private static List<Task> GetTaskListFor<T>(Action<T> method, IEnumerable<T> parameterList)
+        {
+            var taskList = new List<Task>();
+            parameterList.ToList().ForEach(parameter =>
+            {
+                Task task = GetSTATask<T>(method, parameter);
+                taskList.Add(task);
+            });
+            return taskList;
+        }
+
+        public static Task GetSTATask<T>(Action<T> func, T parameter)
+        {
+            var tcs = new TaskCompletionSource<object>();
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    func(parameter);
+                    tcs.SetResult(null);
+                }
+                catch(Exception e)
+                {
+                    tcs.SetException(e);
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            return tcs.Task;
         }
 
         private static List<Thread> GetSTAThreadListFor<T>(Action<T> method, IEnumerable<T> parameterList)
