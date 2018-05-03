@@ -30,7 +30,7 @@ namespace PdfReporting.Logic
             return taskCompletionSource.Task;
         }
 
-        private static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken cancellationToken = default, IProgress<int> progressReporter = null)
+        public static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken cancellationToken = default, IProgress<int> progressReporter = null)
         {
             if(dataSourceObjectList == null)
                 throw new ArgumentNullException(nameof(dataSourceObjectList));
@@ -47,27 +47,11 @@ namespace PdfReporting.Logic
 
         private static void Fill<T>(ref XpsDocumentSplicer xpsDocumentSplicer, IEnumerable<T> dataSourceObjectList)
         {
-            //foreach(T sourceObject in dataSourceObjectList)
-            //{
-            //    xpsDocumentSplicer.AddXpsDocumentWith(sourceObject);
-            //}
-            //var managedThreadPool = ManagedThreadPool.GetStaThreadPool();
-            //managedThreadPool.FillWith(xpsDocumentSplicer.AddXpsDocumentWith, dataSourceObjectList);  
-            List<Task> taskList = GetTaskListFor(xpsDocumentSplicer.AddXpsDocumentWith, dataSourceObjectList);
-            Task.WaitAll(taskList.ToArray());
-            //Execute(taskList);
-            //Await(taskList);
-        }
-
-        private static List<Task> GetTaskListFor<T>(Action<T> method, IEnumerable<T> parameterList)
-        {
-            var taskList = new List<Task>();
-            parameterList.ToList().ForEach(parameter =>
+            foreach(T sourceObject in dataSourceObjectList)
             {
-                Task task = GetSTATask<T>(method, parameter);
-                taskList.Add(task);
-            });
-            return taskList;
+                xpsDocumentSplicer.AddXpsDocumentWith(sourceObject);
+                ReportProgressFor(dataSourceObjectList);
+            } 
         }
 
         public static Task GetSTATask<T>(Action<T> func, T parameter)
@@ -90,39 +74,6 @@ namespace PdfReporting.Logic
             return tcs.Task;
         }
 
-        private static List<Thread> GetSTAThreadListFor<T>(Action<T> method, IEnumerable<T> parameterList)
-        {
-            var threadList = new List<Thread>();
-            parameterList.ToList().ForEach(parameter =>
-            {
-                Thread thread = GetThreadFor(method, parameter);
-                thread.SetApartmentState(ApartmentState.STA);
-                threadList.Add(thread);
-            });
-
-            return threadList;
-        }
-
-        private static Thread GetThreadFor<T>(Action<T> method, T parameter)
-        {
-            return new Thread(() => method(parameter));
-        }
-
-        private static void Execute(List<Thread> threadList)
-        {
-            threadList.ForEach(thread => thread.Start());
-        }
-
-        private static void Await(List<Thread> threadList)
-        {
-            threadList.ForEach(thread =>
-            {
-                CheckForCancellation();
-                thread.Join();
-                ReportProgressFor(threadList);
-            });
-        }
-
         private static void CheckForCancellation()
         {
             if(_cancellationToken.IsCancellationRequested)
@@ -131,7 +82,7 @@ namespace PdfReporting.Logic
             }
         }
 
-        private static void ReportProgressFor(IEnumerable<object> list)
+        private static void ReportProgressFor<T>(IEnumerable<T> list)
         {
             int progress = CalculateProgressFor(list);
             _progressReporter?.Report(progress);
@@ -140,7 +91,7 @@ namespace PdfReporting.Logic
         private static int CalculateProgressFor<T>(IEnumerable<T> list)
         {
             double listCount = list.Count();
-            return _progress += (int)Math.Round((1 / listCount) * 90);  //*90 because after this processes is still some work left ;).
+            return _progress += (int)Math.Round((1 / listCount) * 90);  //Not *100 because after this processes is still some work left ;).
         }
 
         private static void SaveAsPdf(XpsDocumentSplicer xpsDocumentSplicer, string outputDirectory)
@@ -153,7 +104,8 @@ namespace PdfReporting.Logic
 
         private static string GetTempXpsSavePath()
         {
-            return AppDomain.CurrentDomain.BaseDirectory + "tempXpsFile.xps";
+            string verzeichnisName = AppDomain.CurrentDomain.BaseDirectory;
+            return verzeichnisName + $"tempXpsFile{Directory.GetFiles(verzeichnisName).Length}.xps";
         }
 
         private static void ConvertXpsToPdf(string xpsFileName, string outputDirectory)

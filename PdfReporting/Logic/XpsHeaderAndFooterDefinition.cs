@@ -11,6 +11,10 @@ namespace PdfReporting.Logic
         private readonly object _dataSourceObject;
         private readonly ReportProperties _reportProperties;
 
+        private Visual _headerVisual, _footerVisual;
+        private double _headerHeight, _footerHeight;
+        private Size _pageSize;
+
         public Visual HeaderVisual
         {
             get => this.GetVisualFromTemplate(this._headerTemplateFilePath, this._dataSourceObject);
@@ -26,7 +30,7 @@ namespace PdfReporting.Logic
         /// </summary>
         public Size PageSize
         {
-            get => _reportProperties.ReportOrientation == Orientation.Vertical ? new Size(793.5987, 1122.3987) : new Size(1122.3987, 793.5987);
+            get => this._pageSize == default ? (this._pageSize = this._reportProperties.ReportOrientation == Orientation.Vertical ? new Size(793.5987, 1122.3987) : new Size(1122.3987, 793.5987)) : _pageSize;
         }
 
         /// <summary>
@@ -34,7 +38,7 @@ namespace PdfReporting.Logic
         /// </summary>
         public double HeaderHeight
         {
-            get => GetHeightOfTemplate(this._headerTemplateFilePath, this._dataSourceObject);
+            get => this._headerHeight == 0 ? this._headerHeight = GetHeightOfTemplate(this._headerTemplateFilePath, this._dataSourceObject) : this._headerHeight;
         }
 
         /// <summary>
@@ -42,7 +46,7 @@ namespace PdfReporting.Logic
         /// </summary>
         public double FooterHeight
         {
-            get => GetHeightOfTemplate(this._footerTemplateFilePath, this._dataSourceObject);
+            get => this._footerHeight == 0 ? this._footerHeight = GetHeightOfTemplate(this._footerTemplateFilePath, this._dataSourceObject) : this._footerHeight;
         }
 
         public double FooterOffsetY
@@ -78,8 +82,7 @@ namespace PdfReporting.Logic
             if(templateFilePath == null)
                 return null;
 
-            var managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(templateFilePath, dataSourceObject);
-            managedFlowDocument = managedFlowDocument.GetCopy();
+            var managedFlowDocument = ManagedFlowDocument.GetFlowDocumentFrom(templateFilePath, dataSourceObject);  
             SetDimensionsOf(managedFlowDocument);
             return managedFlowDocument.GetVisualOfPage(0);
         }

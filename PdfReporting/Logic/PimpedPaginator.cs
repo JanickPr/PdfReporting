@@ -48,7 +48,7 @@ namespace PdfReporting.Logic
 
         public PimpedPaginator(ManagedFlowDocument document, ReportContentDefinition definition, ReportProperties reportProperties)
         {
-            this._baseFlowDocument = document.GetCopy();
+            this._baseFlowDocument = document;//document.GetCopy();
             this._basePaginator = this._baseFlowDocument.GetPaginator();
             this._definition = definition;
             this._reportProperties = reportProperties;

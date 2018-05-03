@@ -178,8 +178,7 @@ namespace PdfReporting.Logic
         }
 
         private void SaveXpsDocumentWithFixedDocumentSequenceTo(string outputDirectory, FixedDocumentSequence fixedDocumentSequence)
-        {
-            File.Delete(outputDirectory);
+        {     
             using(var xpsDocument = new XpsDocument(outputDirectory, FileAccess.ReadWrite))
             {
                 XpsDocumentWriter xpsDocumentWriter = GetXpsDocumentWriterFor(xpsDocument);

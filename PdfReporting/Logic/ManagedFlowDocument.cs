@@ -97,29 +97,7 @@ namespace PdfReporting.Logic
         {
             DocumentPaginator paginator = this.GetPaginator();
             return paginator.GetPage(pageIndex);
-        }
-
-        public ManagedFlowDocument GetCopy()
-        {
-            MemoryStream stream = this.SaveToMemoryStream();
-            return GetManagedFlowDocumentFrom(stream);
-        }
-
-        private MemoryStream SaveToMemoryStream()
-        {
-            var stream = new MemoryStream();
-            var textRange = new TextRange(this.ContentStart, this.ContentEnd);
-            textRange.Save(stream, DataFormats.Xaml);
-            return stream;
-        }
-
-        private static ManagedFlowDocument GetManagedFlowDocumentFrom(MemoryStream stream)
-        {
-            var copy = new ManagedFlowDocument();
-            var copyDocumentRange = new TextRange(copy.ContentStart, copy.ContentEnd);
-            copyDocumentRange.Load(stream, DataFormats.Xaml);
-            return copy;
-        }
+        } 
 
         public DocumentPaginator GetPaginator()
         {

@@ -79,7 +79,6 @@
     <Compile Include="Logic\EditablePage.cs" />
     <Compile Include="Logic\GeneralExtensionMethods.cs" />
     <Compile Include="Logic\ManagedFlowDocument.cs" />
-    <Compile Include="Logic\ManagedThreadPool.cs" />
     <Compile Include="Logic\ManagedXpsDocument.cs" />
     <Compile Include="Logic\Orientation.cs" />
     <Compile Include="Logic\PackageHelper.cs" />
