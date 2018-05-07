@@ -10,18 +10,18 @@ namespace PdfReporting.Logic
 {
     public static class PdfReportCreation
     {
-        private static int _progress;
+        private static double _progress;
         private static CancellationToken _cancellationToken;
-        private static IProgress<int> _progressReporter;
+        private static IProgress<double> _progressReporter;
 
         #region Methods
 
-        public static async Task CreatePdfReportFromObjectAsync<T>(ReportProperties reportProperties, T dataSourceObject, CancellationToken token = default, IProgress<int> progress = null)
+        public static async Task CreatePdfReportFromObjectAsync<T>(ReportProperties reportProperties, T dataSourceObject, CancellationToken token = default, IProgress<double> progress = null)
         {
             await CreatePdfReportFromObjectListAsync(reportProperties, new List<T> { dataSourceObject }, token, progress).ConfigureAwait(false);
         }
 
-        public static Task CreatePdfReportFromObjectListAsync<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default, IProgress<int> progress = null)
+        public static Task CreatePdfReportFromObjectListAsync<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken token = default, IProgress<double> progress = null)
         {
             var taskCompletionSource = new TaskCompletionSource<object>();
             var thread = new Thread(() => CreatePdfReportFromObjectList(reportProperties, dataSourceObjectList, token, progress));
@@ -30,7 +30,7 @@ namespace PdfReporting.Logic
             return taskCompletionSource.Task;
         }
 
-        public static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken cancellationToken = default, IProgress<int> progressReporter = null)
+        public static void CreatePdfReportFromObjectList<T>(ReportProperties reportProperties, IEnumerable<T> dataSourceObjectList, CancellationToken cancellationToken = default, IProgress<double> progressReporter = null)
         {
             if(dataSourceObjectList == null)
                 throw new ArgumentNullException(nameof(dataSourceObjectList));
@@ -84,14 +84,14 @@ namespace PdfReporting.Logic
 
         private static void ReportProgressFor<T>(IEnumerable<T> list)
         {
-            int progress = CalculateProgressFor(list);
+            double progress = CalculateProgressFor(list);
             _progressReporter?.Report(progress);
         }
 
-        private static int CalculateProgressFor<T>(IEnumerable<T> list)
+        private static double CalculateProgressFor<T>(IEnumerable<T> list)
         {
             double listCount = list.Count();
-            return _progress += (int)Math.Round((1 / listCount) * 90);  //Not *100 because after this processes is still some work left ;).
+            return _progress += (1 / listCount) * 95;  //Not *100 because after this processes is still some work left ;).
         }
 
         private static void SaveAsPdf(XpsDocumentSplicer xpsDocumentSplicer, string outputDirectory)
@@ -119,9 +119,9 @@ namespace PdfReporting.Logic
         private static void FinishProgress()
         {
             _progressReporter?.Report(100);
-            _progressReporter = null;
-            _cancellationToken = default;
             _progress = 0;
+            _cancellationToken = default; 
+            _progressReporter = null;
             PimpedPaginator.GlobalPageCounter = 0;
         }
 
