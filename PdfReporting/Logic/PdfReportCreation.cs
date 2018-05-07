@@ -39,7 +39,8 @@ namespace PdfReporting.Logic
 
             var xpsDocumentSplicer = new XpsDocumentSplicer(reportProperties);
             Fill(ref xpsDocumentSplicer, dataSourceObjectList);
-            CheckForCancellation();
+            if(IsCancellationRequested())
+                return;
 
             SaveAsPdf(xpsDocumentSplicer, reportProperties.OutputDirectory);
             FinishProgress();
@@ -49,37 +50,16 @@ namespace PdfReporting.Logic
         {
             foreach(T sourceObject in dataSourceObjectList)
             {
+                if(IsCancellationRequested())
+                    break;
                 xpsDocumentSplicer.AddXpsDocumentWith(sourceObject);
                 ReportProgressFor(dataSourceObjectList);
             } 
         }
 
-        public static Task GetSTATask<T>(Action<T> func, T parameter)
+        private static bool IsCancellationRequested()
         {
-            var tcs = new TaskCompletionSource<object>();
-            var thread = new Thread(() =>
-            {
-                try
-                {
-                    func(parameter);
-                    tcs.SetResult(null);
-                }
-                catch(Exception e)
-                {
-                    tcs.SetException(e);
-                }
-            });
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            return tcs.Task;
-        }
-
-        private static void CheckForCancellation()
-        {
-            if(_cancellationToken.IsCancellationRequested)
-            {
-                Thread.CurrentThread.Abort();
-            }
+            return _cancellationToken.IsCancellationRequested;
         }
 
         private static void ReportProgressFor<T>(IEnumerable<T> list)
@@ -91,7 +71,7 @@ namespace PdfReporting.Logic
         private static double CalculateProgressFor<T>(IEnumerable<T> list)
         {
             double listCount = list.Count();
-            return _progress += (1 / listCount) * 95;  //Not *100 because after this processes is still some work left ;).
+            return _progress += (1 / listCount) * 85;  //Not *100 because after this processes is still some work left ;).
         }
 
         private static void SaveAsPdf(XpsDocumentSplicer xpsDocumentSplicer, string outputDirectory)
