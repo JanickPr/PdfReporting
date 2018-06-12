@@ -29,5 +29,12 @@
             this.OutputDirectory = outputDirectory;
             this.ReportOrientation = reportOrientation;
         }
+
+        public ReportProperties(string templateFolderPath, PageNumberSettings pageNumberSettings, Orientation reportOrientation)
+        {
+            this.TemplateFolderPath = templateFolderPath;
+            this.PageNumberSettings = pageNumberSettings;
+            this.ReportOrientation = reportOrientation;
+        }
     }
 }

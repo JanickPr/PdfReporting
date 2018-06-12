@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfPdfReporting", "PdfReporting\WpfPdfReporting.csproj", "{575C7798-F787-4190-92AD-77C1FE82AE34}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfReporting", "PdfReporting\PdfReporting.csproj", "{575C7798-F787-4190-92AD-77C1FE82AE34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

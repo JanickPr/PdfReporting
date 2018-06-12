@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>PdfReporting</id>
+    <version>1.1.0.0</version>
+    <title>XamlPdfReporting</title>
+    <authors>Janick_Preun</authors>
+    <owners>Janick_Preun</owners>
+    <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>A package to create pdfreports from xaml-templates</description>
+    <releaseNotes>You can now get the pdf as filestream.</releaseNotes>
+    <copyright>Copyright 2018</copyright>
+    <tags>Reporting Pdf Xaml</tags>
+  </metadata>
+</package>
